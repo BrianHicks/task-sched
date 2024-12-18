@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc};
 pub struct Task {
     // id: usize,
     // uuid: String,
-    // description: String,
+    pub description: String,
     // status: Status,
     // #[serde(default)]
     // tags: Vec<String>,

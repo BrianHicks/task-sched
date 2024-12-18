@@ -45,8 +45,9 @@ impl Cli {
                 .with_filter("due.any:")
                 .call()
                 .await?
-                .first()
-                .map(|t| t.urgency_at(Utc::now(), &config))
+                .iter()
+                .map(|t| (t.description.clone(), t.urgency_at(Utc::now(), &config)))
+                .collect::<Vec<(String, f64)>>()
         );
 
         Ok(())
