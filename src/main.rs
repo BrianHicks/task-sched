@@ -19,11 +19,15 @@ async fn main() -> ExitCode {
 }
 
 #[derive(clap::Parser)]
-pub struct Cli {}
+pub struct Cli {
+    /// The location of the `task` binary to use for modifications.
+    #[clap(long, default_value = "task")]
+    taskwarrior_binary: String,
+}
 
 impl Cli {
     async fn run(&self) -> Result<()> {
-        let tw = Taskwarrior::new("task".to_owned());
+        let tw = Taskwarrior::new(self.taskwarrior_binary.clone());
 
         println!(
             "{:#?}",
