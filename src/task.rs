@@ -5,22 +5,20 @@ use std::fmt;
 
 #[derive(Debug, serde::Deserialize)]
 pub struct Task {
-    id: usize,
-    uuid: String,
-
-    description: String,
-    status: Status,
-    #[serde(default)]
-    tags: Vec<String>,
-
+    // id: usize,
+    // uuid: String,
+    // description: String,
+    // status: Status,
+    // #[serde(default)]
+    // tags: Vec<String>,
     urgency: f64,
 
-    #[serde(deserialize_with = "tw_datetime")]
-    entry: DateTime<Utc>,
-    #[serde(deserialize_with = "tw_datetime")]
-    modified: DateTime<Utc>,
-    #[serde(default, deserialize_with = "tw_datetime_opt")]
-    wait: Option<DateTime<Utc>>,
+    // #[serde(deserialize_with = "tw_datetime")]
+    // entry: DateTime<Utc>,
+    // #[serde(deserialize_with = "tw_datetime")]
+    // modified: DateTime<Utc>,
+    // #[serde(default, deserialize_with = "tw_datetime_opt")]
+    // wait: Option<DateTime<Utc>>,
     #[serde(default, deserialize_with = "tw_datetime_opt")]
     due: Option<DateTime<Utc>>,
     // long-tail fields: priority, project
@@ -60,7 +58,7 @@ pub enum Status {
 
 struct TWDateTimeVisitor;
 
-impl<'de> Visitor<'de> for TWDateTimeVisitor {
+impl Visitor<'_> for TWDateTimeVisitor {
     type Value = DateTime<Utc>;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

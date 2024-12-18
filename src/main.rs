@@ -5,7 +5,6 @@ mod taskwarrior;
 use chrono::Utc;
 use clap::Parser;
 use color_eyre::eyre::{Context, Result};
-use config::Config;
 use std::process::ExitCode;
 use taskwarrior::Taskwarrior;
 
