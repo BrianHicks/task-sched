@@ -1,4 +1,4 @@
-use crate::task::Task;
+use crate::{config::Config, task::Task};
 use color_eyre::eyre::{Context, Result};
 use std::collections::HashMap;
 use tokio::process::Command;
@@ -18,6 +18,19 @@ impl Taskwarrior {
             urgency_coefficients: HashMap::new(),
             filters: Vec::new(),
         }
+    }
+
+    pub async fn config(&self) -> Result<Config> {
+        let output = Command::new(&self.binary)
+            .arg("_show")
+            .output()
+            .await
+            .wrap_err("could not call Taskwarrior")?;
+
+        let config_text =
+            String::from_utf8(output.stdout).wrap_err("config contained invalid UTF-8")?;
+
+        Config::parse(&config_text).wrap_err("could not parse config")
     }
 }
 

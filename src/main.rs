@@ -4,7 +4,7 @@ mod taskwarrior;
 
 use chrono::Utc;
 use clap::Parser;
-use color_eyre::eyre::Result;
+use color_eyre::eyre::{Context, Result};
 use config::Config;
 use std::process::ExitCode;
 use taskwarrior::Taskwarrior;
@@ -32,11 +32,7 @@ impl Cli {
     async fn run(&self) -> Result<()> {
         let tw = Taskwarrior::new(self.taskwarrior_binary.clone());
 
-        let coefficients = Config {
-            urgency_due_coefficient: 12.0,
-            urgency_age_max: 365.0,
-            urgency_age_coefficient: 1.0,
-        };
+        let config = tw.config().await.wrap_err("could not get config")?;
 
         println!(
             "{:#?}",
@@ -50,7 +46,7 @@ impl Cli {
                 .call()
                 .await?
                 .first()
-                .map(|t| t.urgency_at(Utc::now(), &coefficients))
+                .map(|t| t.urgency_at(Utc::now(), &config))
         );
 
         Ok(())
