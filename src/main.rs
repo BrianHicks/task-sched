@@ -1,9 +1,12 @@
+mod config;
 mod task;
 mod taskwarrior;
-use std::process::ExitCode;
 
+use chrono::Utc;
 use clap::Parser;
 use color_eyre::eyre::Result;
+use config::Config;
+use std::process::ExitCode;
 use taskwarrior::Taskwarrior;
 
 #[tokio::main]
@@ -29,6 +32,8 @@ impl Cli {
     async fn run(&self) -> Result<()> {
         let tw = Taskwarrior::new(self.taskwarrior_binary.clone());
 
+        let coefficients = Config { due: 12.0 };
+
         println!(
             "{:#?}",
             tw.export()
@@ -37,8 +42,11 @@ impl Cli {
                 .with_urgency_coefficient("blocked", 0.0)
                 .with_urgency_coefficient("blocking", 0.0)
                 .with_filter("status:pending")
+                .with_filter("due.any:")
                 .call()
                 .await?
+                .first()
+                .map(|t| t.urgency_at(Utc::now(), &coefficients))
         );
 
         Ok(())

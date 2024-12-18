@@ -1,7 +1,7 @@
-use std::fmt;
-
+use crate::config::Config;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::de::{self, Visitor};
+use std::fmt;
 
 #[derive(Debug, serde::Deserialize)]
 pub struct Task {
@@ -24,6 +24,29 @@ pub struct Task {
     #[serde(default, deserialize_with = "tw_datetime_opt")]
     due: Option<DateTime<Utc>>,
     // long-tail fields: priority, project
+}
+
+impl Task {
+    pub fn urgency_at(&self, when: DateTime<Utc>, coefficients: &Config) -> f64 {
+        self.urgency + self.due_urgency_at(when, coefficients.due)
+    }
+
+    fn due_urgency_at(&self, when: DateTime<Utc>, coefficient: f64) -> f64 {
+        match self.due {
+            Some(due) => {
+                let days_overdue = (when - due).num_seconds() as f64 / 86_400.0;
+
+                (if days_overdue >= 7.0 {
+                    1.0
+                } else if days_overdue >= -14.0 {
+                    ((days_overdue + 14.0) * 0.8 / 21.0) + 0.2
+                } else {
+                    0.2
+                } * coefficient)
+            }
+            None => 0.0,
+        }
+    }
 }
 
 #[derive(Debug, serde::Deserialize)]
