@@ -28,7 +28,7 @@ pub struct Task {
 
 impl Task {
     pub fn urgency_at(&self, when: DateTime<Utc>, coefficients: &Config) -> f64 {
-        self.urgency + self.due_urgency_at(when, coefficients.due)
+        self.urgency + self.due_urgency_at(when, coefficients.urgency_due_coefficient)
     }
 
     fn due_urgency_at(&self, when: DateTime<Utc>, coefficient: f64) -> f64 {

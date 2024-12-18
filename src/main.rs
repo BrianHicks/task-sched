@@ -32,7 +32,9 @@ impl Cli {
     async fn run(&self) -> Result<()> {
         let tw = Taskwarrior::new(self.taskwarrior_binary.clone());
 
-        let coefficients = Config { due: 12.0 };
+        let coefficients = Config {
+            urgency_due_coefficient: 12.0,
+        };
 
         println!(
             "{:#?}",

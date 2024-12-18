@@ -1,3 +1,3 @@
 pub struct Config {
-    pub due: f64,
+    pub urgency_due_coefficient: f64,
 }
