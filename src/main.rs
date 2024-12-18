@@ -34,6 +34,8 @@ impl Cli {
 
         let coefficients = Config {
             urgency_due_coefficient: 12.0,
+            urgency_age_max: 365.0,
+            urgency_age_coefficient: 1.0,
         };
 
         println!(
