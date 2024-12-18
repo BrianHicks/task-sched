@@ -56,8 +56,6 @@ impl ExportBuilder {
             .await
             .wrap_err("could not retrieve tasks")?;
 
-        println!("{:?}", String::from_utf8_lossy(&output.stdout));
-
         serde_json::from_slice(&output.stdout).wrap_err("could not deserialize tasks")
     }
 }
