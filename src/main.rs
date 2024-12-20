@@ -4,7 +4,7 @@ mod scheduler;
 // mod task;
 // mod taskwarrior;
 
-use chrono::{Duration, Local};
+use chrono::{Duration, Local, Weekday};
 use clap::Parser;
 use color_eyre::eyre::Result;
 use scheduler::Scheduler;
@@ -39,10 +39,17 @@ impl Cli {
         let end = start + Duration::days(self.days_out.into());
 
         // TODO: figure out how to parse these
+        let work_days = vec![
+            Weekday::Mon,
+            Weekday::Tue,
+            Weekday::Wed,
+            Weekday::Thu,
+            Weekday::Fri,
+        ];
         let work_start = (9, 0);
         let work_end = (17, 30);
 
-        let mut scheduler = Scheduler::new(start, end, work_start, work_end);
+        let mut scheduler = Scheduler::new(start, end, work_days, work_start, work_end);
         scheduler.schedule();
         scheduler.simplify();
 

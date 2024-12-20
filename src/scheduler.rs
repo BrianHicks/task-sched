@@ -1,4 +1,4 @@
-use chrono::{DateTime, Datelike, Duration, Local, TimeZone};
+use chrono::{DateTime, Datelike, Duration, Local, TimeZone, Weekday};
 
 #[derive(Debug)]
 pub struct Scheduler {
@@ -11,6 +11,7 @@ impl Scheduler {
     pub fn new(
         start: DateTime<Local>,
         end: DateTime<Local>,
+        work_days: Vec<Weekday>,
         work_start: (u8, u8),
         work_end: (u8, u8),
     ) -> Self {
@@ -25,48 +26,67 @@ impl Scheduler {
 
         let mut date = new.start.clone();
         while date <= new.end {
-            new.commitments.push(Event {
-                start: Local
-                    .with_ymd_and_hms(date.year(), date.month(), date.day(), 0, 0, 0)
-                    .unwrap(),
-                end: Local
-                    .with_ymd_and_hms(
-                        date.year(),
-                        date.month(),
-                        date.day(),
-                        start_hour.into(),
-                        start_minute.into(),
-                        0,
-                    )
-                    .unwrap(),
-                what: EventData::Offline,
-            });
-
             let next_date = date + Duration::days(1);
 
-            new.commitments.push(Event {
-                start: Local
-                    .with_ymd_and_hms(
-                        date.year(),
-                        date.month(),
-                        date.day(),
-                        end_hour.into(),
-                        end_minute.into(),
-                        0,
-                    )
-                    .unwrap(),
-                end: Local
-                    .with_ymd_and_hms(
-                        next_date.year(),
-                        next_date.month(),
-                        next_date.day(),
-                        0,
-                        0,
-                        0,
-                    )
-                    .unwrap(),
-                what: EventData::Offline,
-            });
+            if work_days.contains(&date.weekday()) {
+                new.commitments.push(Event {
+                    start: Local
+                        .with_ymd_and_hms(date.year(), date.month(), date.day(), 0, 0, 0)
+                        .unwrap(),
+                    end: Local
+                        .with_ymd_and_hms(
+                            date.year(),
+                            date.month(),
+                            date.day(),
+                            start_hour.into(),
+                            start_minute.into(),
+                            0,
+                        )
+                        .unwrap(),
+                    what: EventData::Offline,
+                });
+
+                new.commitments.push(Event {
+                    start: Local
+                        .with_ymd_and_hms(
+                            date.year(),
+                            date.month(),
+                            date.day(),
+                            end_hour.into(),
+                            end_minute.into(),
+                            0,
+                        )
+                        .unwrap(),
+                    end: Local
+                        .with_ymd_and_hms(
+                            next_date.year(),
+                            next_date.month(),
+                            next_date.day(),
+                            0,
+                            0,
+                            0,
+                        )
+                        .unwrap(),
+                    what: EventData::Offline,
+                });
+            } else {
+                new.commitments.push(Event {
+                    start: Local
+                        .with_ymd_and_hms(date.year(), date.month(), date.day(), 0, 0, 0)
+                        .unwrap(),
+                    end: Local
+                        .with_ymd_and_hms(
+                            next_date.year(),
+                            next_date.month(),
+                            next_date.day(),
+                            0,
+                            0,
+                            0,
+                        )
+                        .unwrap(),
+                    what: EventData::Offline,
+                });
+            }
 
             date = next_date
         }
