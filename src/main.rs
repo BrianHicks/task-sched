@@ -1,13 +1,13 @@
 // mod config;
 // mod dates;
-#[allow(dead_code)]
-mod free_time;
-// mod scheduler;
+mod scheduler;
 // mod task;
 // mod taskwarrior;
 
+use chrono::{Duration, Local};
 use clap::Parser;
 use color_eyre::eyre::Result;
+use scheduler::Scheduler;
 use std::process::ExitCode;
 
 #[tokio::main]
@@ -27,10 +27,33 @@ pub struct Cli {
     /// The location of the `task` binary to use for modifications.
     #[clap(long, default_value = "task")]
     taskwarrior_binary: String,
+
+    /// The amount of days in the future to schedule.
+    #[clap(long, default_value = "7")]
+    days_out: u32,
 }
 
 impl Cli {
     async fn run(&self) -> Result<()> {
+        let start = Local::now();
+        let end = start + Duration::days(self.days_out.into());
+
+        // TODO: figure out how to parse these
+        let work_start = (9, 0);
+        let work_end = (17, 30);
+
+        let scheduler = Scheduler::new(start, end, work_start, work_end);
+        scheduler.schedule();
+
+        for commitment in scheduler.commitments {
+            println!(
+                "{} - {}: {:?}",
+                commitment.start.to_rfc2822(),
+                commitment.end.to_rfc2822(),
+                commitment.what
+            )
+        }
+
         ///////////////////////
         // let file = std::fs::File::open("basic.ics").wrap_err("could not open basic.ics")?;
         // let ical_src = std::io::BufReader::new(file);

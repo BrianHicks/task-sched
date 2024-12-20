@@ -1,8 +1,77 @@
-pub struct Scheduler {}
+use chrono::{DateTime, Datelike, Duration, Local, TimeZone};
+
+#[derive(Debug)]
+pub struct Scheduler {
+    start: DateTime<Local>,
+    end: DateTime<Local>,
+    pub commitments: Vec<Event>,
+}
 
 impl Scheduler {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(
+        start: DateTime<Local>,
+        end: DateTime<Local>,
+        work_start: (u8, u8),
+        work_end: (u8, u8),
+    ) -> Self {
+        let mut new = Self {
+            start,
+            end,
+            commitments: Vec::new(),
+        };
+
+        let (start_hour, start_minute) = work_start;
+        let (end_hour, end_minute) = work_end;
+
+        let mut date = new.start.clone();
+        while date <= new.end {
+            new.commitments.push(Event {
+                start: Local
+                    .with_ymd_and_hms(date.year(), date.month(), date.day(), 0, 0, 0)
+                    .unwrap(),
+                end: Local
+                    .with_ymd_and_hms(
+                        date.year(),
+                        date.month(),
+                        date.day(),
+                        start_hour.into(),
+                        start_minute.into(),
+                        0,
+                    )
+                    .unwrap(),
+                what: EventData::Offline,
+            });
+
+            let next_date = date + Duration::days(1);
+
+            new.commitments.push(Event {
+                start: Local
+                    .with_ymd_and_hms(
+                        date.year(),
+                        date.month(),
+                        date.day(),
+                        end_hour.into(),
+                        end_minute.into(),
+                        0,
+                    )
+                    .unwrap(),
+                end: Local
+                    .with_ymd_and_hms(
+                        next_date.year(),
+                        next_date.month(),
+                        next_date.day(),
+                        0,
+                        0,
+                        0,
+                    )
+                    .unwrap(),
+                what: EventData::Offline,
+            });
+
+            date = next_date
+        }
+
+        new
     }
 
     pub fn schedule(&self) {
@@ -27,4 +96,16 @@ impl Scheduler {
 
         */
     }
+}
+
+#[derive(Debug)]
+pub struct Event {
+    pub start: DateTime<Local>,
+    pub end: DateTime<Local>,
+    pub what: EventData,
+}
+
+#[derive(Debug)]
+pub enum EventData {
+    Offline,
 }
