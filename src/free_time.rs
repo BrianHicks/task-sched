@@ -4,6 +4,7 @@ use chrono::{DateTime, TimeZone};
 pub enum FreeTime<TZ: TimeZone> {
     Blocked,
     Single(DateTimeRange<TZ>),
+    Split(Box<FreeTime<TZ>>, Box<FreeTime<TZ>>),
 }
 
 impl<TZ: TimeZone> FreeTime<TZ> {
@@ -15,6 +16,7 @@ impl<TZ: TimeZone> FreeTime<TZ> {
         match self {
             Self::Blocked => Self::Blocked,
             Self::Single(single) => single.block(&range),
+            Self::Split(a, b) => todo!(),
         }
     }
 }
@@ -116,6 +118,21 @@ mod test {
                             range.end + Duration::microseconds(margin),
                         )),
                         FreeTime::Blocked
+                    )
+                }
+            }
+
+            proptest! {
+                #[test]
+                fn inner_splits(outer in date_time_range(0..10), inner in date_time_range(0..5)) {
+                    prop_assume!(outer.strictly_contains(&inner));
+
+                    assert_eq!(
+                        outer.block(&inner),
+                        FreeTime::Split(
+                            Box::new(FreeTime::Single(DateTimeRange::new(outer.start, inner.start))),
+                            Box::new(FreeTime::Single(DateTimeRange::new(inner.end, outer.end))),
+                        )
                     )
                 }
             }
