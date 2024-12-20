@@ -11,14 +11,10 @@ impl<TZ: TimeZone> FreeTime<TZ> {
         Self::Single(DateTimeRange { start, end })
     }
 
-    pub fn block(&self, start: DateTime<TZ>, end: DateTime<TZ>) -> Self {
-        if end <= start {
-            return self.clone();
-        }
-
+    pub fn block(&self, range: &DateTimeRange<TZ>) -> Self {
         match self {
             Self::Blocked => Self::Blocked,
-            Self::Single(range) => range.block(start, end),
+            Self::Single(single) => single.block(&range),
         }
     }
 }
@@ -36,13 +32,17 @@ impl<TZ: TimeZone> DateTimeRange<TZ> {
         Self { start, end }
     }
 
-    fn block(&self, start: DateTime<TZ>, end: DateTime<TZ>) -> FreeTime<TZ> {
+    fn block(&self, other: &Self) -> FreeTime<TZ> {
         // easy case: the ranges don't overlap at all
-        if self.start >= end || self.end <= start {
+        if !self.overlaps(other) {
             FreeTime::Single(self.clone())
         } else {
             FreeTime::Blocked
         }
+    }
+
+    fn overlaps(&self, other: &Self) -> bool {
+        self.start <= other.start && self.end >= other.end
     }
 }
 
@@ -90,14 +90,14 @@ mod test {
             proptest! {
                 #[test]
                 fn completely_before_is_single(before in date_time_range(0..5), after in date_time_range(5..10)) {
-                    assert_eq!(after.block(before.start, before.end), FreeTime::Single(after))
+                    assert_eq!(after.block(&before), FreeTime::Single(after))
                 }
             }
 
             proptest! {
                 #[test]
                 fn completely_after_is_single(before in date_time_range(0..5), after in date_time_range(5..10)) {
-                    assert_eq!(before.block(after.start, after.end), FreeTime::Single(before))
+                    assert_eq!(before.block(&after), FreeTime::Single(before))
                 }
             }
 
@@ -105,10 +105,10 @@ mod test {
                 #[test]
                 fn totally_blocks(range in date_time_range(0..1), margin in 0..1i64) {
                     assert_eq!(
-                        range.block(
+                        range.block(&DateTimeRange::new(
                             range.start - Duration::microseconds(margin),
                             range.end + Duration::microseconds(margin),
-                        ),
+                        )),
                         FreeTime::Blocked
                     )
                 }
