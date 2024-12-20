@@ -31,46 +31,47 @@ pub struct Cli {
 
 impl Cli {
     async fn run(&self) -> Result<()> {
-        let file = std::fs::File::open("basic.ics").wrap_err("could not open basic.ics")?;
-        let ical_src = std::io::BufReader::new(file);
+        ///////////////////////
+        // let file = std::fs::File::open("basic.ics").wrap_err("could not open basic.ics")?;
+        // let ical_src = std::io::BufReader::new(file);
 
-        for cal_res in ical::IcalParser::new(ical_src) {
-            let cal = cal_res?;
+        // for cal_res in ical::IcalParser::new(ical_src) {
+        //     let cal = cal_res?;
 
-            for event in cal.events {
-                println!(
-                    "{:} -- {:} to {:} {:?}",
-                    event
-                        .get_property("SUMMARY")
-                        .and_then(|p| p.value.clone())
-                        .unwrap_or("NO SUMMARY".to_string()),
-                    event
-                        .get_property("DTSTART")
-                        .and_then(|p| p.value.clone())
-                        .unwrap_or("NO DSTART".to_string()),
-                    event
-                        .get_property("DTEND")
-                        .and_then(|p| p.value.clone())
-                        .unwrap_or("NO DTEND".to_string()),
-                    event
-                        .properties
-                        .iter()
-                        .filter(|prop| prop.name == "ATTENDEE")
-                        .filter(|prop| prop.value
-                            == Some("mailto:brian.hicks@paynearme.com".to_string()))
-                        .map(|prop| prop
-                            .params
-                            .clone()
-                            .unwrap_or_else(|| Vec::new())
-                            .drain(..)
-                            .filter(|(k, _)| k == "PARTSTAT")
-                            .map(|(_, v)| v)
-                            .flatten()
-                            .collect())
-                        .collect::<Vec<Vec<String>>>(),
-                );
-            }
-        }
+        //     for event in cal.events {
+        //         println!(
+        //             "{:} -- {:} to {:} {:?}",
+        //             event
+        //                 .get_property("SUMMARY")
+        //                 .and_then(|p| p.value.clone())
+        //                 .unwrap_or("NO SUMMARY".to_string()),
+        //             event
+        //                 .get_property("DTSTART")
+        //                 .and_then(|p| p.value.clone())
+        //                 .unwrap_or("NO DSTART".to_string()),
+        //             event
+        //                 .get_property("DTEND")
+        //                 .and_then(|p| p.value.clone())
+        //                 .unwrap_or("NO DTEND".to_string()),
+        //             event
+        //                 .properties
+        //                 .iter()
+        //                 .filter(|prop| prop.name == "ATTENDEE")
+        //                 .filter(|prop| prop.value
+        //                     == Some("mailto:brian.hicks@paynearme.com".to_string()))
+        //                 .map(|prop| prop
+        //                     .params
+        //                     .clone()
+        //                     .unwrap_or_else(|| Vec::new())
+        //                     .drain(..)
+        //                     .filter(|(k, _)| k == "PARTSTAT")
+        //                     .map(|(_, v)| v)
+        //                     .flatten()
+        //                     .collect())
+        //                 .collect::<Vec<Vec<String>>>(),
+        //         );
+        //     }
+        // }
 
         ///////////////////////
         // let tw = Taskwarrior::new(self.taskwarrior_binary.clone());
