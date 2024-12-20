@@ -96,6 +96,32 @@ impl Scheduler {
 
         */
     }
+
+    pub fn simplify(&mut self) {
+        let size = self.commitments.len();
+
+        let mut old = std::mem::replace(&mut self.commitments, Vec::with_capacity(size));
+
+        let mut iter = old.drain(..);
+        let mut current = iter.next();
+
+        while let Some(mut event) = current.take() {
+            let next = iter.next();
+
+            if let Some(next_event) = &next {
+                if event.end == next_event.start {
+                    event.end = next_event.end;
+
+                    current = Some(event);
+                    continue;
+                } else {
+                    self.commitments.push(event)
+                }
+            }
+
+            current = next;
+        }
+    }
 }
 
 #[derive(Debug)]

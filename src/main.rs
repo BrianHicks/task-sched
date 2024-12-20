@@ -42,8 +42,9 @@ impl Cli {
         let work_start = (9, 0);
         let work_end = (17, 30);
 
-        let scheduler = Scheduler::new(start, end, work_start, work_end);
+        let mut scheduler = Scheduler::new(start, end, work_start, work_end);
         scheduler.schedule();
+        scheduler.simplify();
 
         for commitment in scheduler.commitments {
             println!(
