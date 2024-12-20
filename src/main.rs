@@ -1,5 +1,6 @@
 mod config;
 mod dates;
+mod scheduler;
 mod task;
 mod taskwarrior;
 
