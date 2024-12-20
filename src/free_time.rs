@@ -36,12 +36,18 @@ impl<TZ: TimeZone> DateTimeRange<TZ> {
         // easy case: the ranges don't overlap at all
         if !self.overlaps(other) {
             FreeTime::Single(self.clone())
-        } else {
+        } else if other.strictly_contains(self) {
             FreeTime::Blocked
+        } else {
+            todo!()
         }
     }
 
     fn overlaps(&self, other: &Self) -> bool {
+        (&self.start).max(&other.start) < (&self.end).min(&other.end)
+    }
+
+    fn strictly_contains(&self, other: &DateTimeRange<TZ>) -> bool {
         self.start <= other.start && self.end >= other.end
     }
 }
