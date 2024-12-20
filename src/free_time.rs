@@ -3,28 +3,45 @@ use chrono::{DateTime, TimeZone};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FreeTime<TZ: TimeZone> {
     Blocked,
-    FromTo(DateTime<TZ>, DateTime<TZ>),
+    Single(DateTimeRange<TZ>),
 }
 
 impl<TZ: TimeZone> FreeTime<TZ> {
     pub fn new(start: DateTime<TZ>, end: DateTime<TZ>) -> Self {
-        Self::FromTo(start, end)
+        Self::Single(DateTimeRange { start, end })
     }
 
-    pub fn block(&self, block_start: DateTime<TZ>, block_end: DateTime<TZ>) -> Self {
-        if block_end <= block_start {
+    pub fn block(&self, start: DateTime<TZ>, end: DateTime<TZ>) -> Self {
+        if end <= start {
             return self.clone();
         }
 
         match self {
             Self::Blocked => Self::Blocked,
-            Self::FromTo(our_start, our_end) => {
-                if *our_start >= block_end || *our_end < block_start {
-                    self.clone()
-                } else {
-                    todo!()
-                }
-            }
+            Self::Single(range) => range.block(start, end),
+        }
+    }
+}
+
+/// a "half-open" date range. That is to say: a `DateTimeRange` includes `start`
+/// and all moments right up to but not including `end`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DateTimeRange<TZ: TimeZone> {
+    start: DateTime<TZ>,
+    end: DateTime<TZ>,
+}
+
+impl<TZ: TimeZone> DateTimeRange<TZ> {
+    fn new(start: DateTime<TZ>, end: DateTime<TZ>) -> Self {
+        Self { start, end }
+    }
+
+    fn block(&self, start: DateTime<TZ>, end: DateTime<TZ>) -> FreeTime<TZ> {
+        // easy case: the ranges don't overlap at all
+        if self.start >= end || self.end <= start {
+            FreeTime::Single(self.clone())
+        } else {
+            FreeTime::Blocked
         }
     }
 }
@@ -32,42 +49,92 @@ impl<TZ: TimeZone> FreeTime<TZ> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use chrono::{Duration, Utc};
+    use proptest::prelude::*;
+    use std::ops::Range;
 
-    mod block {
-        use super::FreeTime::*;
+    prop_compose! {
+        fn time(range: Range<i64>)(timestamp in range) -> DateTime<Utc> {
+            Utc.timestamp_opt(timestamp, 0).unwrap()
+        }
+    }
+
+    prop_compose! {
+        fn date_time_range(range: Range<i64>)(a in time(range.clone()), b in time(range)) -> DateTimeRange<Utc> {
+            let start = a.min(b);
+            let mut end = a.max(b);
+
+            if start == end {
+                end += Duration::seconds(1);
+            }
+
+            DateTimeRange::new(start, end)
+        }
+    }
+
+    fn free_time(range: Range<i64>) -> impl Strategy<Value = FreeTime<Utc>> {
+        prop_oneof![
+            1 => Just(FreeTime::Blocked),
+            5 => date_time_range(range).prop_map(FreeTime::Single)
+        ]
+    }
+
+    mod date_time_range {
         use super::*;
-        use chrono::Utc;
-        use proptest::prelude::*;
-        use std::ops::Range;
 
-        prop_compose! {
-            fn time(range: Range<i64>)(timestamp in range) -> DateTime<Utc> {
-                Utc.timestamp_opt(timestamp, 0).unwrap()
-            }
-        }
+        mod block {
+            use chrono::Duration;
 
-        fn from_to(range: Range<i64>) -> impl Strategy<Value = FreeTime<Utc>> {
-            (time(range.clone()), time(range))
-                .prop_map(|(start, end)| FromTo(start.min(end), start.max(end)))
-        }
+            use super::*;
 
-        fn free_time(range: Range<i64>) -> impl Strategy<Value = FreeTime<Utc>> {
-            prop_oneof![
-                1 => Just(Blocked),
-                5 => from_to(range),
-            ]
-        }
-
-        proptest! {
-            #[test]
-            fn blocked_remains_blocked(start in time(0..50), end in time(50..100)) {
-                assert_eq!(Blocked.block(start, end), Blocked)
+            proptest! {
+                #[test]
+                fn completely_before_is_single(before in date_time_range(0..5), after in date_time_range(5..10)) {
+                    assert_eq!(after.block(before.start, before.end), FreeTime::Single(after))
+                }
             }
 
-            #[test]
-            fn end_after_start_has_no_effect(start in time(5..10), end in time(0..5), ft in free_time(0..10)) {
-                assert_eq!(ft.block(start, end), ft)
+            proptest! {
+                #[test]
+                fn completely_after_is_single(before in date_time_range(0..5), after in date_time_range(5..10)) {
+                    assert_eq!(before.block(after.start, after.end), FreeTime::Single(before))
+                }
+            }
+
+            proptest! {
+                #[test]
+                fn totally_blocks(range in date_time_range(0..1), margin in 0..1i64) {
+                    assert_eq!(
+                        range.block(
+                            range.start - Duration::microseconds(margin),
+                            range.end + Duration::microseconds(margin),
+                        ),
+                        FreeTime::Blocked
+                    )
+                }
             }
         }
     }
+
+    // mod block {
+    //     use super::FreeTime::*;
+    //     use super::*;
+
+    //     proptest! {
+    //         #[test]
+    //         fn blocked_remains_blocked(start in time(0..50), end in time(50..100)) {
+    //             assert_eq!(Blocked.block(start, end), Blocked)
+    //         }
+
+    //         #[test]
+    //         fn end_after_start_has_no_effect(start in time(5..10), end in time(0..5), ft in free_time(0..10)) {
+    //             assert_eq!(ft.block(start, end), ft)
+    //         }
+
+    //         #[test]
+    //         fn wider_range_totally_blocks(ft in free_time(0..10)) {
+    //             assert_eq!()
+    //         }
+    //     }
+    // }
 }
