@@ -1,16 +1,14 @@
-mod config;
-mod dates;
+// mod config;
+// mod dates;
+#[allow(dead_code)]
 mod free_time;
-mod scheduler;
-mod task;
-mod taskwarrior;
+// mod scheduler;
+// mod task;
+// mod taskwarrior;
 
-use chrono::Utc;
 use clap::Parser;
-use color_eyre::eyre::{Context, Result};
-use ical::{parser::Component, property::Property};
+use color_eyre::eyre::Result;
 use std::process::ExitCode;
-use taskwarrior::Taskwarrior;
 
 #[tokio::main]
 async fn main() -> ExitCode {
