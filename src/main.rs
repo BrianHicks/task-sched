@@ -1,3 +1,4 @@
+mod caldotcom;
 // mod config;
 // mod dates;
 mod scheduler;
@@ -32,9 +33,8 @@ pub struct Cli {
     #[clap(long, default_value = "7")]
     days_out: u32,
 
-    /// Local file to read calendar data from
-    #[clap(long, default_value = "basic.ics")]
-    calendar_file: PathBuf,
+    #[clap(long)]
+    cal_token: String,
 }
 
 impl Cli {
@@ -58,24 +58,20 @@ impl Cli {
         scheduler.simplify();
 
         // add calendar events
-        let file = std::fs::File::open("basic.ics").wrap_err("could not open basic.ics")?;
-        let ical_src = std::io::BufReader::new(file);
-        for cal_res in ical::IcalParser::new(ical_src) {
-            let cal = cal_res.wrap_err("could not load calendar")?;
+        let client = caldotcom::CalDotCom::new(self.cal_token.clone());
 
-            for event in cal.events {
-                scheduler.push(event.try_into().wrap_err("could not convert event")?);
-            }
-        }
+        let calendars = client.calendars().await?;
 
-        for commitment in scheduler.commitments {
-            println!(
-                "{} - {}: {:?}",
-                commitment.start.to_rfc2822(),
-                commitment.end.to_rfc2822(),
-                commitment.what
-            )
-        }
+        println!("{calendars:#?}");
+
+        // for commitment in scheduler.commitments {
+        //     println!(
+        //         "{} - {}: {:?}",
+        //         commitment.start.to_rfc2822(),
+        //         commitment.end.to_rfc2822(),
+        //         commitment.what
+        //     )
+        // }
 
         ///////////////////////
 
