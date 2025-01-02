@@ -117,7 +117,10 @@ impl Scheduler {
         self.commitments.push(new_event);
     }
 
-    pub fn schedule(&self) {
+    pub fn schedule(&mut self) {
+        // Before we begin, make sure we don't have overlapping blocked time.
+        self.simplify();
+
         /*
 
         in a loop while we have free space in the schedule:
