@@ -24,7 +24,7 @@ impl Scheduler {
         let (start_hour, start_minute) = work_start;
         let (end_hour, end_minute) = work_end;
 
-        let mut date = new.start.clone();
+        let mut date = new.start;
         while date <= new.end {
             let next_date = date + Duration::days(1);
 
