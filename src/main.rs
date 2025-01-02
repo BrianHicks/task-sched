@@ -7,9 +7,9 @@ mod scheduler;
 
 use chrono::{Duration, Local, Weekday};
 use clap::Parser;
-use color_eyre::eyre::{Context, Result};
+use color_eyre::eyre::Result;
 use scheduler::Scheduler;
-use std::{path::PathBuf, process::ExitCode};
+use std::process::ExitCode;
 
 #[tokio::main]
 async fn main() -> ExitCode {
