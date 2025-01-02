@@ -129,7 +129,7 @@ impl Scheduler {
             let next = iter.next();
 
             if let Some(next_event) = &next {
-                if event.end == next_event.start {
+                if event.what == next_event.what && event.end == next_event.start {
                     event.end = next_event.end;
 
                     current = Some(event);
@@ -151,7 +151,7 @@ pub struct Event {
     pub what: EventData,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum EventData {
     Offline,
 }
