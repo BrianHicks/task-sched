@@ -182,5 +182,4 @@ pub struct Event {
 #[derive(Debug, PartialEq)]
 pub enum EventData {
     Blocked,
-    Calendar(String),
 }
