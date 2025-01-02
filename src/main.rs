@@ -6,9 +6,9 @@ mod scheduler;
 
 use chrono::{Duration, Local, Weekday};
 use clap::Parser;
-use color_eyre::eyre::Result;
+use color_eyre::eyre::{Context, Result};
 use scheduler::Scheduler;
-use std::process::ExitCode;
+use std::{path::PathBuf, process::ExitCode};
 
 #[tokio::main]
 async fn main() -> ExitCode {
@@ -31,6 +31,10 @@ pub struct Cli {
     /// The amount of days in the future to schedule.
     #[clap(long, default_value = "7")]
     days_out: u32,
+
+    /// Local file to read calendar data from
+    #[clap(long, default_value = "basic.ics")]
+    calendar_file: PathBuf,
 }
 
 impl Cli {
@@ -53,6 +57,17 @@ impl Cli {
         scheduler.schedule();
         scheduler.simplify();
 
+        // add calendar events
+        let file = std::fs::File::open("basic.ics").wrap_err("could not open basic.ics")?;
+        let ical_src = std::io::BufReader::new(file);
+        for cal_res in ical::IcalParser::new(ical_src) {
+            let cal = cal_res.wrap_err("could not load calendar")?;
+
+            for event in cal.events {
+                scheduler.push(event.try_into().wrap_err("could not convert event")?);
+            }
+        }
+
         for commitment in scheduler.commitments {
             println!(
                 "{} - {}: {:?}",
@@ -63,8 +78,6 @@ impl Cli {
         }
 
         ///////////////////////
-        // let file = std::fs::File::open("basic.ics").wrap_err("could not open basic.ics")?;
-        // let ical_src = std::io::BufReader::new(file);
 
         // for cal_res in ical::IcalParser::new(ical_src) {
         //     let cal = cal_res?;
