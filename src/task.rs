@@ -1,5 +1,5 @@
 use crate::config::Config;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 
 #[derive(Debug, serde::Deserialize)]
 pub struct Task {
@@ -9,16 +9,18 @@ pub struct Task {
     // status: Status,
     // #[serde(default)]
     // tags: Vec<String>,
-    urgency: f64,
+    pub urgency: f64,
 
     #[serde(deserialize_with = "crate::dates::tw_datetime")]
-    entry: DateTime<Utc>,
+    pub entry: DateTime<Utc>,
     // #[serde(deserialize_with = "crate::dates::tw_datetime")]
     // modified: DateTime<Utc>,
     // #[serde(default, deserialize_with = "crate::dates::tw_datetime_opt")]
     // wait: Option<DateTime<Utc>>,
     #[serde(default, deserialize_with = "crate::dates::tw_datetime_opt")]
-    due: Option<DateTime<Utc>>,
+    pub due: Option<DateTime<Utc>>,
+    #[serde(default, deserialize_with = "crate::dates::duration")]
+    pub estimate: Option<Duration>,
     // long-tail fields: priority, project
 }
 

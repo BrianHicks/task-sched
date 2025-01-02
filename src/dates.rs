@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Duration, NaiveDateTime, Utc};
 use serde::de::{self, Visitor};
 use std::fmt;
 
@@ -59,4 +59,31 @@ where
     D: serde::Deserializer<'de>,
 {
     d.deserialize_option(OptionalTWDateTimeVisitor)
+}
+
+struct DurationVisitor;
+
+impl<'de> Visitor<'de> for DurationVisitor {
+    type Value = Option<Duration>;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a string in ISO8601 duration format or null")
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let parsed = iso8601_duration::Duration::parse(value)
+            .map_err(|error| de::Error::custom(format!("{error:?}")))?;
+
+        Ok(parsed.to_chrono())
+    }
+}
+
+pub fn duration<'de, D>(d: D) -> Result<Option<Duration>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    d.deserialize_str(DurationVisitor)
 }

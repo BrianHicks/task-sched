@@ -91,8 +91,12 @@ impl Cli {
                 .call()
                 .await?
                 .iter()
-                .map(|t| (t.description.clone(), t.urgency_at(Utc::now(), &config)))
-                .collect::<Vec<(String, f64)>>()
+                .map(|t| (
+                    t.description.clone(),
+                    t.estimate,
+                    t.urgency_at(Utc::now(), &config)
+                ))
+                .collect::<Vec<(String, Option<Duration>, f64)>>()
         );
 
         Ok(())
