@@ -1,6 +1,4 @@
-use chrono::{DateTime, Datelike, Duration, Local, NaiveDate, NaiveDateTime, TimeZone, Weekday};
-use color_eyre::eyre::{bail, Context, ContextCompat, OptionExt, Result};
-use ical::parser::{ical::component::IcalEvent, Component};
+use chrono::{DateTime, Datelike, Duration, Local, TimeZone, Weekday};
 
 #[derive(Debug)]
 pub struct Scheduler {
@@ -185,61 +183,4 @@ pub struct Event {
 pub enum EventData {
     Blocked,
     Calendar(String),
-}
-
-impl TryFrom<IcalEvent> for Event {
-    type Error = color_eyre::eyre::Error;
-
-    fn try_from(event: IcalEvent) -> Result<Self, Self::Error> {
-        let start_raw = event
-            .get_property("DTSTART")
-            .and_then(|prop| prop.value.clone())
-            .wrap_err("could not get event start")?;
-
-        let start = from_ical_date(&start_raw)
-            .wrap_err_with(|| format!("could not parse event start ({start_raw})"))?
-            .into();
-
-        let mut end_raw = event
-            .get_property("DTEND")
-            .and_then(|prop| prop.value.clone())
-            .wrap_err("could not get event end")?
-            .replace("Z", "");
-        end_raw.push_str("+00:00");
-
-        let end = from_ical_date(&end_raw)
-            .wrap_err_with(|| format!("could not parse event end ({end_raw})"))?
-            .into();
-
-        let what = EventData::Calendar(
-            event
-                .get_property("SUMMARY")
-                .and_then(|prop| prop.value.clone())
-                .unwrap_or("Untitled Event".to_string()),
-        );
-
-        Ok(Self { start, end, what })
-    }
-}
-
-const ICAL_DATE_FORMAT: &str = "%Y%m%dT%H%M%S%:z";
-
-const ICAL_DATE_FORMAT_NO_TZ: &str = "%Y%m%dT%H%M%S";
-
-const ICAL_DATE_FORMAT_DATE_ONLY_NO_TZ: &str = "%Y%m%d";
-
-fn from_ical_date(s: &str) -> Result<DateTime<Local>> {
-    if let Ok(dt) = DateTime::parse_from_str(&s.replace("Z", "+00:00"), ICAL_DATE_FORMAT) {
-        Ok(dt.into())
-    } else if let Ok(dt) = NaiveDateTime::parse_from_str(&s, ICAL_DATE_FORMAT_NO_TZ) {
-        Ok(dt.and_utc().into())
-    } else if let Ok(dt) = DateTime::parse_from_str(&s.replace("+", "T000000+"), ICAL_DATE_FORMAT) {
-        Ok(dt.into())
-    } else if let Ok(d) = NaiveDate::parse_from_str(&s, ICAL_DATE_FORMAT_DATE_ONLY_NO_TZ) {
-        d.and_hms_opt(0, 0, 0)
-            .ok_or_eyre("could not set {s} to midnight")
-            .map(|dt| dt.and_utc().into())
-    } else {
-        bail!("could not parse {s} to any known date format");
-    }
 }

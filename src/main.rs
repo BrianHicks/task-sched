@@ -75,46 +75,6 @@ impl Cli {
         }
 
         ///////////////////////
-
-        // for cal_res in ical::IcalParser::new(ical_src) {
-        //     let cal = cal_res?;
-
-        //     for event in cal.events {
-        //         println!(
-        //             "{:} -- {:} to {:} {:?}",
-        //             event
-        //                 .get_property("SUMMARY")
-        //                 .and_then(|p| p.value.clone())
-        //                 .unwrap_or("NO SUMMARY".to_string()),
-        //             event
-        //                 .get_property("DTSTART")
-        //                 .and_then(|p| p.value.clone())
-        //                 .unwrap_or("NO DSTART".to_string()),
-        //             event
-        //                 .get_property("DTEND")
-        //                 .and_then(|p| p.value.clone())
-        //                 .unwrap_or("NO DTEND".to_string()),
-        //             event
-        //                 .properties
-        //                 .iter()
-        //                 .filter(|prop| prop.name == "ATTENDEE")
-        //                 .filter(|prop| prop.value
-        //                     == Some("mailto:brian.hicks@paynearme.com".to_string()))
-        //                 .map(|prop| prop
-        //                     .params
-        //                     .clone()
-        //                     .unwrap_or_else(|| Vec::new())
-        //                     .drain(..)
-        //                     .filter(|(k, _)| k == "PARTSTAT")
-        //                     .map(|(_, v)| v)
-        //                     .flatten()
-        //                     .collect())
-        //                 .collect::<Vec<Vec<String>>>(),
-        //         );
-        //     }
-        // }
-
-        ///////////////////////
         // let tw = Taskwarrior::new(self.taskwarrior_binary.clone());
 
         // let config = tw.config().await.wrap_err("could not get config")?;
