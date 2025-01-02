@@ -72,7 +72,6 @@ impl CalDotCom {
 
 #[derive(Debug, Deserialize)]
 pub struct Response<T> {
-    pub status: String,
     pub data: T,
 }
 
