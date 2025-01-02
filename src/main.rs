@@ -5,11 +5,12 @@ mod scheduler;
 mod task;
 mod taskwarrior;
 
-use chrono::{Duration, Local, Weekday};
+use chrono::{Duration, Local, Utc, Weekday};
 use clap::Parser;
-use color_eyre::eyre::Result;
+use color_eyre::eyre::{Context, Result};
 use scheduler::Scheduler;
 use std::process::ExitCode;
+use taskwarrior::Taskwarrior;
 
 #[tokio::main]
 async fn main() -> ExitCode {
@@ -74,26 +75,25 @@ impl Cli {
             )
         }
 
-        ///////////////////////
-        // let tw = Taskwarrior::new(self.taskwarrior_binary.clone());
+        ////////////////////
+        let tw = Taskwarrior::new(self.taskwarrior_binary.clone());
 
-        // let config = tw.config().await.wrap_err("could not get config")?;
+        let config = tw.config().await.wrap_err("could not get config")?;
 
-        // println!(
-        //     "{:#?}",
-        //     tw.export()
-        //         .with_urgency_coefficient("due", 0.0)
-        //         .with_urgency_coefficient("age", 0.0)
-        //         .with_urgency_coefficient("blocked", 0.0)
-        //         .with_urgency_coefficient("blocking", 0.0)
-        //         .with_filter("status:pending")
-        //         .with_filter("due.any:")
-        //         .call()
-        //         .await?
-        //         .iter()
-        //         .map(|t| (t.description.clone(), t.urgency_at(Utc::now(), &config)))
-        //         .collect::<Vec<(String, f64)>>()
-        // );
+        println!(
+            "{:#?}",
+            tw.export()
+                .with_urgency_coefficient("due", 0.0)
+                .with_urgency_coefficient("age", 0.0)
+                .with_urgency_coefficient("blocked", 0.0)
+                .with_urgency_coefficient("blocking", 0.0)
+                .with_filter("status:pending")
+                .call()
+                .await?
+                .iter()
+                .map(|t| (t.description.clone(), t.urgency_at(Utc::now(), &config)))
+                .collect::<Vec<(String, f64)>>()
+        );
 
         Ok(())
     }
