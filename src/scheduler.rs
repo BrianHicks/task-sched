@@ -45,7 +45,7 @@ impl Scheduler {
                             0,
                         )
                         .unwrap(),
-                    what: EventData::Offline,
+                    what: EventData::Blocked,
                 });
 
                 new.commitments.push(Event {
@@ -69,7 +69,7 @@ impl Scheduler {
                             0,
                         )
                         .unwrap(),
-                    what: EventData::Offline,
+                    what: EventData::Blocked,
                 });
             } else {
                 new.commitments.push(Event {
@@ -86,7 +86,7 @@ impl Scheduler {
                             0,
                         )
                         .unwrap(),
-                    what: EventData::Offline,
+                    what: EventData::Blocked,
                 });
             }
 
@@ -180,7 +180,6 @@ pub struct Event {
 
 #[derive(Debug, PartialEq)]
 pub enum EventData {
-    Offline,
     Blocked,
     Calendar(String),
 }
