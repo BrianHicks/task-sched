@@ -152,8 +152,12 @@ impl Scheduler {
             let next = iter.next();
 
             if let Some(next_event) = &next {
-                if event.what == next_event.what && event.end == next_event.start {
-                    event.end = next_event.end;
+                if event.what == next_event.what
+                    && event.end >= next_event.start
+                    && event.start <= next_event.end
+                {
+                    event.start = event.start.min(next_event.start);
+                    event.end = event.end.max(next_event.end);
 
                     current = Some(event);
                     continue;
