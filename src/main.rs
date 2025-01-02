@@ -1,9 +1,9 @@
 mod caldotcom;
-// mod config;
-// mod dates;
+mod config;
+mod dates;
 mod scheduler;
-// mod task;
-// mod taskwarrior;
+mod task;
+mod taskwarrior;
 
 use chrono::{Duration, Local, Weekday};
 use clap::Parser;
