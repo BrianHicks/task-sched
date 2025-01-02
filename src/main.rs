@@ -61,8 +61,9 @@ impl Cli {
         let client = caldotcom::CalDotCom::new(self.cal_token.clone());
 
         let calendars = client.calendars().await?;
+        let busy_times = client.busy_times(calendars.data, start, end).await?;
 
-        println!("{calendars:#?}");
+        println!("{busy_times:#?}");
 
         // for commitment in scheduler.commitments {
         //     println!(
