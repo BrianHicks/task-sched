@@ -4,7 +4,7 @@ use chrono::{DateTime, Duration, Utc};
 #[derive(Debug, serde::Deserialize)]
 pub struct Task {
     // id: usize,
-    // uuid: String,
+    pub uuid: String,
     pub description: String,
     // status: Status,
     // #[serde(default)]
@@ -15,8 +15,8 @@ pub struct Task {
     pub entry: DateTime<Utc>,
     // #[serde(deserialize_with = "crate::dates::tw_datetime")]
     // modified: DateTime<Utc>,
-    // #[serde(default, deserialize_with = "crate::dates::tw_datetime_opt")]
-    // wait: Option<DateTime<Utc>>,
+    #[serde(default, deserialize_with = "crate::dates::tw_datetime_opt")]
+    pub wait: Option<DateTime<Utc>>,
     #[serde(default, deserialize_with = "crate::dates::tw_datetime_opt")]
     pub due: Option<DateTime<Utc>>,
     #[serde(default, deserialize_with = "crate::dates::duration")]
@@ -25,6 +25,13 @@ pub struct Task {
 }
 
 impl Task {
+    pub fn available_at(&self, when: DateTime<Utc>) -> bool {
+        match self.wait {
+            None => true,
+            Some(wait) => wait <= when,
+        }
+    }
+
     pub fn urgency_at(&self, when: DateTime<Utc>, config: &Config) -> f64 {
         self.urgency
             + self.base_due_urgency_at(when) * config.urgency_due_coefficient

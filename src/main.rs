@@ -5,7 +5,7 @@ mod scheduler;
 mod task;
 mod taskwarrior;
 
-use chrono::{Duration, Local, Utc, Weekday};
+use chrono::{Duration, Local, Weekday};
 use clap::Parser;
 use color_eyre::eyre::{Context, Result};
 use scheduler::Scheduler;
@@ -54,8 +54,11 @@ impl Cli {
         let work_start = (9, 0);
         let work_end = (17, 30);
 
-        let mut scheduler = Scheduler::new(start, end, work_days, work_start, work_end);
-        scheduler.schedule();
+        let tw = Taskwarrior::new(self.taskwarrior_binary.clone());
+
+        let tw_config = tw.config().await.wrap_err("could not get config")?;
+
+        let mut scheduler = Scheduler::new(start, end, work_days, work_start, work_end, tw_config);
 
         // add calendar events
         let client = caldotcom::CalDotCom::new(self.cal_token.clone());
@@ -65,7 +68,18 @@ impl Cli {
             scheduler.block(busy_time.start, busy_time.end);
         }
 
-        scheduler.simplify();
+        tw.export()
+            .with_urgency_coefficient("due", 0.0)
+            .with_urgency_coefficient("age", 0.0)
+            .with_urgency_coefficient("blocked", 0.0)
+            .with_urgency_coefficient("blocking", 0.0)
+            .with_filter("status:pending")
+            .call()
+            .await?
+            .drain(..)
+            .for_each(|t| scheduler.add_task(t));
+
+        scheduler.schedule(Local::now());
         for commitment in scheduler.commitments {
             println!(
                 "{} - {}: {:?}",
@@ -74,30 +88,6 @@ impl Cli {
                 commitment.what
             )
         }
-
-        ////////////////////
-        let tw = Taskwarrior::new(self.taskwarrior_binary.clone());
-
-        let config = tw.config().await.wrap_err("could not get config")?;
-
-        println!(
-            "{:#?}",
-            tw.export()
-                .with_urgency_coefficient("due", 0.0)
-                .with_urgency_coefficient("age", 0.0)
-                .with_urgency_coefficient("blocked", 0.0)
-                .with_urgency_coefficient("blocking", 0.0)
-                .with_filter("status:pending")
-                .call()
-                .await?
-                .iter()
-                .map(|t| (
-                    t.description.clone(),
-                    t.estimate,
-                    t.urgency_at(Utc::now(), &config)
-                ))
-                .collect::<Vec<(String, Option<Duration>, f64)>>()
-        );
 
         Ok(())
     }
