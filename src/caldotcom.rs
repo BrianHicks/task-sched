@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local, TimeZone};
+use chrono::{DateTime, Local};
 use color_eyre::eyre::{Result, WrapErr};
 use reqwest::Url;
 use serde::Deserialize;

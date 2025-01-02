@@ -96,10 +96,16 @@ impl Scheduler {
         new
     }
 
-    pub fn push(&mut self, new_event: Event) {
-        if new_event.end < self.start || new_event.start > self.end {
+    pub fn block(&mut self, start: DateTime<Local>, end: DateTime<Local>) {
+        if end <= self.start || start >= self.end {
             return;
         }
+
+        let new_event = Event {
+            start,
+            end,
+            what: EventData::Blocked,
+        };
 
         for (i, event) in self.commitments.iter().enumerate() {
             if event.start > new_event.start {
@@ -171,6 +177,7 @@ pub struct Event {
 #[derive(Debug, PartialEq)]
 pub enum EventData {
     Offline,
+    Blocked,
     Calendar(String),
 }
 

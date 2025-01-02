@@ -55,24 +55,24 @@ impl Cli {
 
         let mut scheduler = Scheduler::new(start, end, work_days, work_start, work_end);
         scheduler.schedule();
-        scheduler.simplify();
 
         // add calendar events
         let client = caldotcom::CalDotCom::new(self.cal_token.clone());
 
         let calendars = client.calendars().await?;
-        let busy_times = client.busy_times(calendars.data, start, end).await?;
+        for busy_time in client.busy_times(calendars.data, start, end).await?.data {
+            scheduler.block(busy_time.start, busy_time.end);
+        }
 
-        println!("{busy_times:#?}");
-
-        // for commitment in scheduler.commitments {
-        //     println!(
-        //         "{} - {}: {:?}",
-        //         commitment.start.to_rfc2822(),
-        //         commitment.end.to_rfc2822(),
-        //         commitment.what
-        //     )
-        // }
+        scheduler.simplify();
+        for commitment in scheduler.commitments {
+            println!(
+                "{} - {}: {:?}",
+                commitment.start.to_rfc2822(),
+                commitment.end.to_rfc2822(),
+                commitment.what
+            )
+        }
 
         ///////////////////////
 
