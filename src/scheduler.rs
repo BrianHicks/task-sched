@@ -166,8 +166,8 @@ impl Scheduler {
         // Before we begin, make sure we don't have overlapping blocked time.
         self.simplify();
 
-        let mut commitments = std::mem::replace(&mut self.commitments, Vec::new());
-        let mut outstanding_tasks = std::mem::replace(&mut self.outstanding_tasks, HashSet::new());
+        let mut commitments = std::mem::take(&mut self.commitments);
+        let mut outstanding_tasks = std::mem::take(&mut self.outstanding_tasks);
 
         let mut index = 0;
         let mut now = self.start;
@@ -262,8 +262,8 @@ impl Scheduler {
             tracing::trace!(?index, ?now, "done scheduling slot");
         }
 
-        let _ = std::mem::replace(&mut self.commitments, commitments);
-        let _ = std::mem::replace(&mut self.outstanding_tasks, outstanding_tasks);
+        self.commitments = commitments;
+        self.outstanding_tasks = outstanding_tasks;
     }
 
     pub fn simplify(&mut self) {
