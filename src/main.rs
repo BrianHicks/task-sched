@@ -79,12 +79,12 @@ impl Cli {
             .drain(..)
             .for_each(|t| scheduler.add_task(t));
 
-        scheduler.schedule(Local::now());
-        for commitment in scheduler.commitments {
+        for commitment in scheduler.schedule(Local::now()) {
             println!(
-                "{} - {}: {:?}",
+                "{} - {} ({}): {:?}",
                 commitment.start.to_rfc2822(),
                 commitment.end.to_rfc2822(),
+                commitment.end - commitment.start,
                 commitment.what
             )
         }
