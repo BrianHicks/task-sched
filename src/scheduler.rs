@@ -172,12 +172,16 @@ impl Scheduler {
 
         'scheduler: loop {
             while let Some(task) = commitments.get(index) {
-                if task.start >= now {
+                if task.start > now {
                     break;
                 }
                 index += 1;
                 now = now.max(task.end);
                 tracing::trace!(?index, ?now, "moved forward");
+            }
+
+            if now >= self.end {
+                break;
             }
 
             let next_commitment = commitments.get(index).map(|t| t.start).unwrap_or(self.end);
@@ -249,12 +253,6 @@ impl Scheduler {
             }
 
             tracing::debug!(?index, ?now, "done scheduling slot");
-
-            // TODO: increment index etc etc
-            if index > 8 {
-                break;
-            };
-            // break;
         }
 
         commitments
