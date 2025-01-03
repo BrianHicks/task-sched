@@ -262,8 +262,8 @@ impl Scheduler {
             tracing::trace!(?index, ?now, "done scheduling slot");
         }
 
-        std::mem::replace(&mut self.commitments, commitments);
-        std::mem::replace(&mut self.outstanding_tasks, outstanding_tasks);
+        let _ = std::mem::replace(&mut self.commitments, commitments);
+        let _ = std::mem::replace(&mut self.outstanding_tasks, outstanding_tasks);
     }
 
     pub fn simplify(&mut self) {
