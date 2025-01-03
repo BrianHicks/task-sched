@@ -174,7 +174,7 @@ impl Scheduler {
                 .unwrap_or(self.start)
                 .max(start);
 
-            println!("starting to schedule at {start}");
+            tracing::trace!(?start, "starting to schedule");
 
             let next_commitment = self
                 .commitments
@@ -182,7 +182,7 @@ impl Scheduler {
                 .map(|t| t.start)
                 .unwrap_or(self.end);
 
-            println!("next commitment is at {next_commitment}");
+            tracing::trace!(?next_commitment, "next commitment");
 
             let mut time_available = (next_commitment - start).min(SESSION_TIME);
             let can_schedule_break = time_available == SESSION_TIME;
@@ -191,7 +191,7 @@ impl Scheduler {
             }
 
             while time_available > Duration::zero() {
-                println!("I have {time_available} available");
+                tracing::trace!(?time_available, "remaining time available");
 
                 match self.best_task_at(start, time_available) {
                     None => break 'scheduler,
@@ -227,7 +227,7 @@ impl Scheduler {
                 index += 1;
             }
 
-            println!("done with commitments, index is at {index}, start is at {start}");
+            tracing::debug!(?index, ?start, "done with commitments");
 
             // TODO: increment index etc etc
             if index > 50 {
