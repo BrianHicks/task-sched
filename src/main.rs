@@ -43,7 +43,7 @@ pub struct Cli {
     taskwarrior_binary: String,
 
     /// The amount of days in the future to schedule.
-    #[clap(long, default_value = "7")]
+    #[clap(long, default_value = "3")]
     days_out: u32,
 
     #[clap(long, env)]
