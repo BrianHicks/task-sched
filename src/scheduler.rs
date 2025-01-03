@@ -199,31 +199,28 @@ impl Scheduler {
                 )
             }
 
-            println!("I have {time_available} available");
+            while time_available > Duration::zero() {
+                println!("I have {time_available} available");
 
-            if time_available < Duration::minutes(5) {
-                index += 1;
-                continue;
-            }
+                match self.best_task_at(start) {
+                    None => break,
+                    Some(task) => {
+                        let time_for_task = task.remaining_time.min(time_available);
 
-            println!("{index} {start:?} {:?}", time_available.num_minutes());
-            match self.best_task_at(start) {
-                None => break,
-                Some(task) => {
-                    let time_for_task = task.remaining_time.min(time_available);
+                        commitments.insert(
+                            index,
+                            Event {
+                                start,
+                                end: start + time_for_task,
+                                what: EventData::Task(task.uuid.clone(), task.description.clone()),
+                            },
+                        );
 
-                    commitments.insert(
-                        index,
-                        Event {
-                            start,
-                            end: start + time_for_task,
-                            what: EventData::Task(task.uuid.clone(), task.description.clone()),
-                        },
-                    );
-
-                    time_available -= time_for_task;
-                    task.checked_sub(time_for_task);
-                    println!("{time_available:?} {task:?}");
+                        index += 1;
+                        start += time_for_task;
+                        time_available -= time_for_task;
+                        task.checked_sub(time_for_task);
+                    }
                 }
             }
 
