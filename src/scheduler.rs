@@ -156,7 +156,6 @@ impl Scheduler {
         let mut index = 1;
         let mut start = start.max(self.start);
 
-        // maybe loop start
         while let Some(task) = commitments.get(index) {
             if task.start >= start {
                 break;
@@ -231,7 +230,10 @@ impl Scheduler {
             println!("done with commitments, index is at {index}, start is at {start}");
 
             // TODO: increment index etc etc
-            break;
+            if index > 50 {
+                break;
+            }
+            // break;
         }
 
         commitments
