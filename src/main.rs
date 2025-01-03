@@ -5,7 +5,7 @@ mod scheduler;
 mod task;
 mod taskwarrior;
 
-use chrono::{Duration, Local, Weekday};
+use chrono::{Duration, Local, Timelike, Weekday};
 use clap::Parser;
 use color_eyre::eyre::{Context, Result};
 use scheduler::Scheduler;
@@ -79,7 +79,13 @@ impl Cli {
             .drain(..)
             .for_each(|t| scheduler.add_task(t));
 
-        for commitment in scheduler.schedule(Local::now()) {
+        for commitment in scheduler.schedule(
+            Local::now()
+                .with_second(0)
+                .unwrap()
+                .with_nanosecond(0)
+                .unwrap(),
+        ) {
             println!(
                 "{} - {} ({}): {:?}",
                 commitment.start.to_rfc2822(),
