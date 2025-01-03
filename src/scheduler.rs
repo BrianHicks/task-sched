@@ -176,10 +176,6 @@ impl Scheduler {
 
             let next_commitment = commitments.get(index).map(|t| t.start).unwrap_or(self.end);
 
-            tracing::trace!(?next_commitment, "found next commitment");
-
-            break;
-
             tracing::trace!(?next_commitment, "next commitment");
 
             let mut time_available = (next_commitment - now).min(SESSION_TIME);
@@ -187,6 +183,10 @@ impl Scheduler {
             if can_schedule_break {
                 time_available -= BREAK_TIME;
             }
+
+            tracing::trace!(start=?now, ?time_available, "scheduling for slot");
+
+            break;
 
             while time_available > Duration::zero() {
                 tracing::trace!(?time_available, "remaining time available");
