@@ -3,6 +3,7 @@ use color_eyre::eyre::{Context, Result};
 use std::collections::HashMap;
 use tokio::process::Command;
 
+#[derive(Debug)]
 pub struct Taskwarrior {
     binary: String,
 }
@@ -12,6 +13,7 @@ impl Taskwarrior {
         Self { binary }
     }
 
+    #[tracing::instrument]
     pub fn export(&self) -> ExportBuilder {
         ExportBuilder {
             binary: self.binary.clone(),
@@ -20,9 +22,14 @@ impl Taskwarrior {
         }
     }
 
+    #[tracing::instrument]
     pub async fn config(&self) -> Result<Config> {
-        let output = Command::new(&self.binary)
-            .arg("_show")
+        let mut command = Command::new(&self.binary);
+        command.arg("_show");
+
+        tracing::trace!(?command, "getting config from taskwarrior");
+
+        let output = command
             .output()
             .await
             .wrap_err("could not call Taskwarrior")?;
@@ -53,6 +60,7 @@ impl ExportBuilder {
         self
     }
 
+    #[tracing::instrument(skip(self))]
     pub async fn call(self) -> Result<Vec<Task>> {
         let mut command = Command::new(self.binary);
 
@@ -63,6 +71,8 @@ impl ExportBuilder {
         command.args(self.filters);
 
         command.arg("export");
+
+        tracing::trace!(?command, "calling taskwarrior for export");
 
         let output = command
             .output()
