@@ -186,17 +186,9 @@ impl Scheduler {
             println!("next commitment is at {next_commitment}");
 
             let mut time_available = (next_commitment - start).min(SESSION_TIME);
-
-            if time_available == SESSION_TIME {
+            let can_schedule_break = time_available == SESSION_TIME;
+            if can_schedule_break {
                 time_available -= BREAK_TIME;
-                commitments.insert(
-                    index,
-                    Event {
-                        start: start + time_available,
-                        end: start + time_available + BREAK_TIME,
-                        what: EventData::Break,
-                    },
-                )
             }
 
             while time_available > Duration::zero() {
@@ -223,6 +215,20 @@ impl Scheduler {
                     }
                 }
             }
+
+            if can_schedule_break {
+                commitments.insert(
+                    index,
+                    Event {
+                        start,
+                        end: start + BREAK_TIME,
+                        what: EventData::Break,
+                    },
+                );
+                index += 1;
+            }
+
+            println!("done with commitments, index is at {index}, start is at {start}");
 
             // TODO: increment index etc etc
             break;
