@@ -93,7 +93,6 @@ impl Cli {
             .with_urgency_coefficient("age", 0.0)
             .with_urgency_coefficient("blocked", 0.0)
             .with_urgency_coefficient("blocking", 0.0)
-            .with_filter("status:pending")
             .call()
             .await?
             .drain(..)

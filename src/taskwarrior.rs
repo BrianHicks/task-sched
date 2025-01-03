@@ -18,7 +18,6 @@ impl Taskwarrior {
         ExportBuilder {
             binary: self.binary.clone(),
             urgency_coefficients: HashMap::new(),
-            filters: Vec::new(),
         }
     }
 
@@ -44,18 +43,11 @@ impl Taskwarrior {
 pub struct ExportBuilder {
     binary: String,
     urgency_coefficients: HashMap<String, f64>,
-    filters: Vec<String>,
 }
 
 impl ExportBuilder {
     pub fn with_urgency_coefficient(mut self, key: &str, value: f64) -> Self {
         self.urgency_coefficients.insert(key.to_owned(), value);
-
-        self
-    }
-
-    pub fn with_filter(mut self, filter: &str) -> Self {
-        self.filters.push(filter.to_owned());
 
         self
     }
@@ -67,8 +59,6 @@ impl ExportBuilder {
         for (key, coefficient) in self.urgency_coefficients {
             command.arg(format!("rc.urgency.{}.coefficient={}", key, coefficient));
         }
-
-        command.args(self.filters);
 
         command.arg("export");
 
