@@ -194,7 +194,7 @@ impl Scheduler {
             while time_available > Duration::zero() {
                 println!("I have {time_available} available");
 
-                match self.best_task_at(start) {
+                match self.best_task_at(start, time_available) {
                     None => break 'scheduler,
                     Some(task) => {
                         let time_for_task = task.remaining_time.min(time_available);
@@ -288,13 +288,24 @@ impl Scheduler {
         }
     }
 
-    fn best_task_at(&mut self, when: DateTime<Local>) -> Option<&mut TimedTask> {
+    fn best_task_at(
+        &mut self,
+        when: DateTime<Local>,
+        time_available: Duration,
+    ) -> Option<&mut TimedTask> {
         self.tasks
             .values_mut()
             .filter(|task| task.available())
             .filter(|task| task.task.available_at(when.to_utc()))
             .map(|task| {
-                let urgency = task.urgency_at(when.to_utc(), &self.tw_config);
+                let mut urgency = task.urgency_at(when.to_utc(), &self.tw_config);
+                urgency -= ((task.remaining_time.num_minutes() as f64
+                    - time_available.num_minutes() as f64)
+                    / time_available.num_minutes() as f64)
+                    .abs()
+                    .powf(2.0)
+                    .min(3.0);
+
                 (task, urgency)
             })
             .max_by(|(_, urg_a), (_, urg_b)| urg_a.total_cmp(urg_b))
