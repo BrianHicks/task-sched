@@ -3,25 +3,23 @@ use chrono::{DateTime, Duration, Utc};
 
 #[derive(Debug, serde::Deserialize)]
 pub struct Task {
-    // id: usize,
     pub uuid: String,
+
     pub description: String,
-    // status: Status,
-    // #[serde(default)]
-    // tags: Vec<String>,
+
     pub urgency: f64,
 
     #[serde(deserialize_with = "crate::dates::tw_datetime")]
     pub entry: DateTime<Utc>,
-    // #[serde(deserialize_with = "crate::dates::tw_datetime")]
-    // modified: DateTime<Utc>,
+
     #[serde(default, deserialize_with = "crate::dates::tw_datetime_opt")]
     pub wait: Option<DateTime<Utc>>,
+
     #[serde(default, deserialize_with = "crate::dates::tw_datetime_opt")]
     pub due: Option<DateTime<Utc>>,
+
     #[serde(default, deserialize_with = "crate::dates::duration")]
     pub estimate: Option<Duration>,
-    // long-tail fields: priority, project
 }
 
 impl Task {
