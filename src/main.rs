@@ -46,7 +46,7 @@ pub struct Cli {
     #[clap(long, default_value = "7")]
     days_out: u32,
 
-    #[clap(long)]
+    #[clap(long, env)]
     cal_token: String,
 
     #[clap(long, default_value = "info")]
