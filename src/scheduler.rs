@@ -164,7 +164,7 @@ impl Scheduler {
             index += 1;
         }
 
-        loop {
+        'scheduler: loop {
             if index == commitments.len() {
                 break;
             }
@@ -203,7 +203,7 @@ impl Scheduler {
                 println!("I have {time_available} available");
 
                 match self.best_task_at(start) {
-                    None => break,
+                    None => break 'scheduler,
                     Some(task) => {
                         let time_for_task = task.remaining_time.min(time_available);
 
