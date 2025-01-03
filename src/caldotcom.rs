@@ -16,6 +16,7 @@ impl CalDotCom {
         }
     }
 
+    #[tracing::instrument(skip(self))]
     pub async fn calendars(&self) -> Result<Response<Calendars>> {
         self.client
             .get("https://api.cal.com/v2/calendars")
@@ -28,6 +29,7 @@ impl CalDotCom {
             .wrap_err("could not load calendars from JSON")
     }
 
+    #[tracing::instrument(skip(self, calendars))]
     pub async fn busy_times(
         &self,
         calendars: Calendars,
