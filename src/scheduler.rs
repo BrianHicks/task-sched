@@ -22,6 +22,10 @@ const SESSION_TIME: Duration = Duration::minutes(30);
 const BREAK_TIME: Duration = Duration::minutes(5);
 
 impl Scheduler {
+    #[tracing::instrument(
+        "Scheduler::new",
+        skip(start, end, work_days, work_start, work_end, tw_config)
+    )]
     pub fn new(
         start: DateTime<Local>,
         end: DateTime<Local>,
@@ -49,8 +53,11 @@ impl Scheduler {
         let mut date = new.start;
         while date <= new.end {
             let next_date = date + Duration::days(1);
+            tracing::trace!(?date, "considering blocked times for date");
 
             if work_days.contains(&date.weekday()) {
+                tracing::trace!(?date, "was a weekday");
+
                 new.commitments.push(Event {
                     start: Local
                         .with_ymd_and_hms(date.year(), date.month(), date.day(), 0, 0, 0)
@@ -92,6 +99,8 @@ impl Scheduler {
                     what: EventData::Blocked,
                 });
             } else {
+                tracing::trace!(?date, "was a weekend");
+
                 new.commitments.push(Event {
                     start: Local
                         .with_ymd_and_hms(date.year(), date.month(), date.day(), 0, 0, 0)
@@ -112,6 +121,8 @@ impl Scheduler {
 
             date = next_date
         }
+
+        tracing::trace!(?new.commitments, "determined initial blocker commitments");
 
         new
     }
