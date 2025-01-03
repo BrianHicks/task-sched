@@ -11,10 +11,22 @@ use color_eyre::eyre::{Context, Result};
 use scheduler::Scheduler;
 use std::process::ExitCode;
 use taskwarrior::Taskwarrior;
+use tracing::level_filters::LevelFilter;
+use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 #[tokio::main]
 async fn main() -> ExitCode {
     let cli = Cli::parse();
+
+    let filter = EnvFilter::builder()
+        .with_env_var("TASK_SCHED_LOG")
+        .with_default_directive(cli.log_level.into())
+        .from_env_lossy();
+
+    tracing_subscriber::registry()
+        .with(filter)
+        .with(fmt::layer())
+        .init();
 
     if let Err(err) = cli.run().await {
         eprintln!("{err:?}");
@@ -36,6 +48,9 @@ pub struct Cli {
 
     #[clap(long)]
     cal_token: String,
+
+    #[clap(long, default_value = "info")]
+    log_level: LevelFilter,
 }
 
 impl Cli {
