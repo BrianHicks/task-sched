@@ -147,7 +147,8 @@ impl Scheduler {
         );
     }
 
-    pub fn schedule(mut self, start: DateTime<Local>) -> Vec<Event> {
+    #[tracing::instrument(skip(self))]
+    pub fn schedule(mut self) -> Vec<Event> {
         // Before we begin, make sure we don't have overlapping blocked time.
         self.simplify();
 

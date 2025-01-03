@@ -55,7 +55,11 @@ pub struct Cli {
 
 impl Cli {
     async fn run(&self) -> Result<()> {
-        let start = Local::now();
+        let start = Local::now()
+            .with_second(0)
+            .unwrap()
+            .with_nanosecond(0)
+            .unwrap();
         let end = start + Duration::days(self.days_out.into());
 
         // TODO: figure out how to parse these
@@ -94,13 +98,7 @@ impl Cli {
             .drain(..)
             .for_each(|t| scheduler.add_task(t));
 
-        for commitment in scheduler.schedule(
-            Local::now()
-                .with_second(0)
-                .unwrap()
-                .with_nanosecond(0)
-                .unwrap(),
-        ) {
+        for commitment in scheduler.schedule() {
             println!(
                 "{} - {} ({}): {:?}",
                 commitment.start.to_rfc2822(),
