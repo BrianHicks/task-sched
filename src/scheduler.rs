@@ -3,7 +3,7 @@ use crate::task::Task;
 use chrono::{DateTime, Datelike, Duration, Local, TimeZone, Weekday};
 use std::{
     collections::{HashMap, HashSet},
-    fmt::Display,
+    fmt::{Display, Write},
     ops::Div,
 };
 
@@ -368,10 +368,20 @@ pub struct Event {
 
 impl Display for Event {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.start.format("%B %-d, %-I:%M %P").fmt(f)?;
+        self.start.format("%b %-d, %_I:%M %P").fmt(f)?;
         f.write_str(" (")?;
-        f.write_str(&human_time(self.end - self.start))?;
-        f.write_str(") - ")?;
+
+        let duration = human_time(self.end - self.start);
+        let mut pad = 3_usize.checked_sub(duration.len()).unwrap_or(0);
+
+        f.write_str(&duration)?;
+        f.write_char(')')?;
+        while pad > 0 {
+            f.write_char(' ')?;
+            pad -= 1;
+        }
+
+        f.write_str(" - ")?;
         self.what.fmt(f)
     }
 }
