@@ -37,7 +37,7 @@ async fn main() -> ExitCode {
 }
 
 #[derive(clap::Parser)]
-#[clap(version)]
+#[clap(version, about)]
 pub struct Cli {
     /// The location of the `task` binary to use for modifications.
     #[clap(long, default_value = "task")]
