@@ -17,12 +17,9 @@ pub struct Scheduler {
     pub commitments: Vec<Event>,
 }
 
-static TASK_TIME: Duration = Duration::minutes(25);
+const SESSION_TIME: Duration = Duration::minutes(30);
 
-static BREAK_TIME: Duration = Duration::minutes(5);
-
-// should always be TASK_TIME + BREAK_TIME
-static POMODORO_TIME: Duration = Duration::minutes(30);
+const BREAK_TIME: Duration = Duration::minutes(5);
 
 impl Scheduler {
     pub fn new(
@@ -150,15 +147,17 @@ impl Scheduler {
         );
     }
 
-    pub fn schedule(&mut self, start: DateTime<Local>) {
+    pub fn schedule(mut self, start: DateTime<Local>) -> Vec<Event> {
         // Before we begin, make sure we don't have overlapping blocked time.
         self.simplify();
+
+        let mut commitments = std::mem::replace(&mut self.commitments, Vec::new());
 
         let mut index = 1;
         let mut start = start.max(self.start);
 
         // maybe loop start
-        while let Some(task) = self.commitments.get(index) {
+        while let Some(task) = commitments.get(index) {
             if task.start >= start {
                 break;
             }
@@ -166,26 +165,43 @@ impl Scheduler {
         }
 
         loop {
-            if index == self.commitments.len() {
+            if index == commitments.len() {
                 break;
             }
 
-            start = self
-                .commitments
+            start = commitments
                 .get(index - 1)
                 .map(|t| t.end)
                 .unwrap_or(self.start)
                 .max(start);
 
-            let mut time_available = (self
+            println!("starting to schedule at {start}");
+
+            let next_commitment = self
                 .commitments
                 .get(index)
                 .map(|t| t.start)
-                .unwrap_or(self.end)
-                - start)
-                .min(POMODORO_TIME);
+                .unwrap_or(self.end);
 
-            if time_available < BREAK_TIME {
+            println!("next commitment is at {next_commitment}");
+
+            let mut time_available = (next_commitment - start).min(SESSION_TIME);
+
+            if time_available == SESSION_TIME {
+                time_available -= BREAK_TIME;
+                commitments.insert(
+                    index,
+                    Event {
+                        start: start + time_available,
+                        end: start + time_available + BREAK_TIME,
+                        what: EventData::Break,
+                    },
+                )
+            }
+
+            println!("I have {time_available} available");
+
+            if time_available < Duration::minutes(5) {
                 index += 1;
                 continue;
             }
@@ -194,9 +210,19 @@ impl Scheduler {
             match self.best_task_at(start) {
                 None => break,
                 Some(task) => {
-                    time_available -= task.remaining_time;
-                    task.checked_sub(time_available);
+                    let time_for_task = task.remaining_time.min(time_available);
 
+                    commitments.insert(
+                        index,
+                        Event {
+                            start,
+                            end: start + time_for_task,
+                            what: EventData::Task(task.uuid.clone(), task.description.clone()),
+                        },
+                    );
+
+                    time_available -= time_for_task;
+                    task.checked_sub(time_for_task);
                     println!("{time_available:?} {task:?}");
                 }
             }
@@ -204,6 +230,8 @@ impl Scheduler {
             // TODO: increment index etc etc
             break;
         }
+
+        commitments
 
         /*
 
@@ -305,4 +333,6 @@ pub struct Event {
 #[derive(Debug, PartialEq)]
 pub enum EventData {
     Blocked,
+    Break,
+    Task(String, String),
 }
