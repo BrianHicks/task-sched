@@ -259,7 +259,7 @@ impl Scheduler {
                 index += 1;
             }
 
-            tracing::debug!(?index, ?now, "done scheduling slot");
+            tracing::trace!(?index, ?now, "done scheduling slot");
         }
 
         std::mem::replace(&mut self.commitments, commitments);
