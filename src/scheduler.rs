@@ -171,11 +171,6 @@ impl Scheduler {
         tracing::trace!(?index, ?now, "initial values");
 
         'scheduler: loop {
-            // if the event at `index` is in the future, start where we are
-            // if it's in the past, increment `index` until that's true, setting `now` to the end of each event
-            //
-            // once we have the "future event", do the regular "next commitment" logic
-
             while let Some(task) = commitments.get(index) {
                 if task.start >= now {
                     break;
@@ -197,24 +192,39 @@ impl Scheduler {
 
             tracing::trace!(start=?now, ?time_available, "scheduling for slot");
 
-            break;
-
             while time_available > Duration::zero() {
-                tracing::trace!(?time_available, "remaining time available");
+                if time_available <= BREAK_TIME && !can_schedule_break {
+                    tracing::debug!(start=?now, ?time_available, "scheduling short break");
+
+                    commitments.insert(
+                        index,
+                        Event {
+                            start: now,
+                            end: now + time_available,
+                            what: EventData::Break,
+                        },
+                    );
+
+                    index += 1;
+                    now += time_available;
+                    time_available = Duration::zero();
+                }
 
                 match self.best_task_at(now, time_available) {
-                    None => break 'scheduler,
+                    None => {
+                        tracing::trace!("no tasks left; finishing");
+                        break 'scheduler;
+                    }
                     Some(task) => {
                         let time_for_task = task.remaining_time.min(time_available);
 
-                        commitments.insert(
-                            index,
-                            Event {
-                                start: now,
-                                end: now + time_for_task,
-                                what: EventData::Task(task.uuid.clone(), task.description.clone()),
-                            },
-                        );
+                        let event = Event {
+                            start: now,
+                            end: now + time_for_task,
+                            what: EventData::Task(task.uuid.clone(), task.description.clone()),
+                        };
+                        tracing::debug!(?event.start, ?time_for_task, ?event.what, "scheduled task");
+                        commitments.insert(index, event);
 
                         index += 1;
                         now += time_for_task;
@@ -222,6 +232,8 @@ impl Scheduler {
                         task.checked_sub(time_for_task);
                     }
                 }
+
+                tracing::trace!(?time_available, "remaining time available");
             }
 
             if can_schedule_break {
@@ -236,12 +248,12 @@ impl Scheduler {
                 index += 1;
             }
 
-            tracing::debug!(?index, ?now, "done with commitments");
+            tracing::debug!(?index, ?now, "done scheduling slot");
 
             // TODO: increment index etc etc
-            if index > 50 {
+            if index > 8 {
                 break;
-            }
+            };
             // break;
         }
 
