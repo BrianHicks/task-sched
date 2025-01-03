@@ -60,7 +60,7 @@ impl ExportBuilder {
         self
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument("export", skip(self))]
     pub async fn call(self) -> Result<Vec<Task>> {
         let mut command = Command::new(self.binary);
 
