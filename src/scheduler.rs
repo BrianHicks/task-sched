@@ -367,7 +367,7 @@ pub struct Event {
 }
 
 impl Event {
-    fn duration(&self) -> Duration {
+    pub fn duration(&self) -> Duration {
         self.end - self.start
     }
 }

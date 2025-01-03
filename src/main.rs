@@ -101,7 +101,9 @@ impl Cli {
         scheduler.schedule();
 
         for commitment in scheduler.commitments {
-            println!("{}", commitment)
+            if commitment.duration() <= Duration::minutes(120) {
+                println!("{}", commitment)
+            }
         }
 
         Ok(())
