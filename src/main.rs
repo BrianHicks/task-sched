@@ -98,7 +98,9 @@ impl Cli {
             .drain(..)
             .for_each(|t| scheduler.add_task(t));
 
-        for commitment in scheduler.schedule() {
+        scheduler.schedule();
+
+        for commitment in scheduler.commitments {
             println!(
                 "{} - {} ({}): {:?}",
                 commitment.start.to_rfc2822(),

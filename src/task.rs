@@ -1,5 +1,6 @@
 use crate::config::Config;
 use chrono::{DateTime, Duration, Utc};
+use std::collections::HashSet;
 
 #[derive(Debug, serde::Deserialize)]
 pub struct Task {
@@ -20,6 +21,9 @@ pub struct Task {
 
     #[serde(default, deserialize_with = "crate::dates::duration")]
     pub estimate: Option<Duration>,
+
+    #[serde(default)]
+    pub depends: HashSet<String>,
 }
 
 impl Task {

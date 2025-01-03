@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::task::Task;
 use chrono::{DateTime, Datelike, Duration, Local, TimeZone, Weekday};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug)]
 pub struct Scheduler {
@@ -12,6 +12,7 @@ pub struct Scheduler {
     // tasks
     tw_config: Config,
     tasks: HashMap<String, TimedTask>,
+    outstanding_tasks: HashSet<String>,
 
     // result
     pub commitments: Vec<Event>,
@@ -42,6 +43,7 @@ impl Scheduler {
             // tasks
             tw_config,
             tasks: HashMap::new(),
+            outstanding_tasks: HashSet::new(),
 
             // result
             commitments: Vec::new(),
@@ -149,6 +151,7 @@ impl Scheduler {
     }
 
     pub fn add_task(&mut self, task: Task) {
+        self.outstanding_tasks.insert(task.uuid.clone());
         self.tasks.insert(
             task.uuid.clone(),
             TimedTask {
@@ -159,11 +162,12 @@ impl Scheduler {
     }
 
     #[tracing::instrument(skip(self))]
-    pub fn schedule(mut self) -> Vec<Event> {
+    pub fn schedule(&mut self) {
         // Before we begin, make sure we don't have overlapping blocked time.
         self.simplify();
 
         let mut commitments = std::mem::replace(&mut self.commitments, Vec::new());
+        let mut outstanding_tasks = std::mem::replace(&mut self.outstanding_tasks, HashSet::new());
 
         let mut index = 0;
         let mut now = self.start;
@@ -214,7 +218,7 @@ impl Scheduler {
                     time_available = Duration::zero();
                 }
 
-                match self.best_task_at(now, time_available) {
+                match self.best_task_at(now, time_available, &outstanding_tasks) {
                     None => {
                         tracing::trace!("no tasks left; finishing");
                         break 'scheduler;
@@ -234,6 +238,9 @@ impl Scheduler {
                         now += time_for_task;
                         time_available -= time_for_task;
                         task.checked_sub(time_for_task);
+                        if !task.available() {
+                            outstanding_tasks.remove(&task.uuid);
+                        }
                     }
                 }
 
@@ -255,7 +262,8 @@ impl Scheduler {
             tracing::debug!(?index, ?now, "done scheduling slot");
         }
 
-        commitments
+        std::mem::replace(&mut self.commitments, commitments);
+        std::mem::replace(&mut self.outstanding_tasks, outstanding_tasks);
     }
 
     pub fn simplify(&mut self) {
@@ -295,11 +303,18 @@ impl Scheduler {
         &mut self,
         when: DateTime<Local>,
         time_available: Duration,
+        outstanding_tasks: &HashSet<String>,
     ) -> Option<&mut TimedTask> {
         self.tasks
             .values_mut()
             .filter(|task| task.available())
-            .filter(|task| task.task.available_at(when.to_utc()))
+            .filter(|task| task.available_at(when.to_utc()))
+            .filter(|task| {
+                outstanding_tasks
+                    .intersection(&task.depends)
+                    .next()
+                    .is_none()
+            })
             .map(|task| {
                 let mut urgency = task.urgency_at(when.to_utc(), &self.tw_config);
                 urgency -= ((task.remaining_time.num_minutes() as f64
