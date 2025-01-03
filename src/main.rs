@@ -10,6 +10,7 @@ use clap::Parser;
 use color_eyre::eyre::{Context, Result};
 use scheduler::Scheduler;
 use std::process::ExitCode;
+use task::Status;
 use taskwarrior::Taskwarrior;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
@@ -96,6 +97,7 @@ impl Cli {
             .call()
             .await?
             .drain(..)
+            .filter(|t| t.status == Status::Pending)
             .for_each(|t| scheduler.add_task(t));
 
         scheduler.schedule();

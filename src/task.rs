@@ -10,6 +10,8 @@ pub struct Task {
 
     pub urgency: f64,
 
+    pub status: Status,
+
     #[serde(deserialize_with = "crate::dates::tw_datetime")]
     pub entry: DateTime<Utc>,
 
@@ -73,7 +75,7 @@ impl Task {
     }
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum Status {
     Pending,
