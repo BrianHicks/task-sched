@@ -366,12 +366,18 @@ pub struct Event {
     pub what: EventData,
 }
 
+impl Event {
+    fn duration(&self) -> Duration {
+        self.end - self.start
+    }
+}
+
 impl Display for Event {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.start.format("%b %-d, %_I:%M %P").fmt(f)?;
         f.write_str(" (")?;
 
-        let duration = human_time(self.end - self.start);
+        let duration = human_time(self.duration());
         let mut pad = 3_usize.checked_sub(duration.len()).unwrap_or(0);
 
         f.write_str(&duration)?;
