@@ -101,13 +101,7 @@ impl Cli {
         scheduler.schedule();
 
         for commitment in scheduler.commitments {
-            println!(
-                "{} - {} ({}): {:?}",
-                commitment.start.to_rfc2822(),
-                commitment.end.to_rfc2822(),
-                commitment.end - commitment.start,
-                commitment.what
-            )
+            println!("{}", commitment)
         }
 
         Ok(())

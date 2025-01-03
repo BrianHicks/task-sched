@@ -1,7 +1,11 @@
 use crate::config::Config;
 use crate::task::Task;
 use chrono::{DateTime, Datelike, Duration, Local, TimeZone, Weekday};
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Display,
+    ops::Div,
+};
 
 #[derive(Debug)]
 pub struct Scheduler {
@@ -362,9 +366,48 @@ pub struct Event {
     pub what: EventData,
 }
 
+impl Display for Event {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.start.format("%B %m %d, %H:%M %p").fmt(f)?;
+        f.write_str(" (")?;
+        f.write_str(&human_time(self.end - self.start))?;
+        f.write_str(") - ")?;
+        self.what.fmt(f)
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum EventData {
     Blocked,
     Break,
     Task(String, String),
+}
+
+impl Display for EventData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Blocked => f.write_str("[blocked]"),
+            Self::Break => f.write_str("[break]"),
+            EventData::Task(_, name) => f.write_str(&name),
+        }
+    }
+}
+
+fn human_time(duration: Duration) -> String {
+    let mut minutes = duration.num_minutes() as f64;
+
+    if minutes < 60.0 {
+        format!("{minutes}m")
+    } else {
+        let hours = minutes.div(60.0).floor();
+        minutes -= hours * 60.0;
+
+        // we could look for time longer than hours, but practically speaking we'll
+        // barely ever get into hours territory so I'm not too concerned about it!
+        if minutes > 0.0 {
+            format!("{hours}h{minutes}m")
+        } else {
+            format!("{hours}h")
+        }
+    }
 }
