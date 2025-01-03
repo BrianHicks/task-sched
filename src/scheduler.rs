@@ -368,7 +368,7 @@ pub struct Event {
 
 impl Display for Event {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.start.format("%B %m %d, %H:%M %p").fmt(f)?;
+        self.start.format("%B %-d, %-I:%M %P").fmt(f)?;
         f.write_str(" (")?;
         f.write_str(&human_time(self.end - self.start))?;
         f.write_str(") - ")?;
