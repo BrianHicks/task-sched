@@ -1,19 +1,23 @@
 use chrono::{DateTime, Local};
 use color_eyre::eyre::{Result, WrapErr};
-use reqwest::Url;
+use reqwest::{Client, Url};
 use serde::Deserialize;
 
 pub struct CalDotCom {
+    client: Client,
     token: String,
 }
 
 impl CalDotCom {
     pub fn new(token: String) -> Self {
-        Self { token }
+        Self {
+            client: Client::new(),
+            token,
+        }
     }
 
     pub async fn calendars(&self) -> Result<Response<Calendars>> {
-        reqwest::Client::new()
+        self.client
             .get("https://api.cal.com/v2/calendars")
             .header("Authorization", format!("Bearer {}", &self.token))
             .send()
@@ -58,7 +62,7 @@ impl CalDotCom {
         let url = Url::parse_with_params("https://api.cal.com/v2/calendars/busy-times", params)
             .wrap_err("could not construct busy-times URL")?;
 
-        reqwest::Client::new()
+        self.client
             .get(url)
             .header("Authorization", format!("Bearer {}", &self.token))
             .send()
