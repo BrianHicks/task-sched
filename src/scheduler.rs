@@ -154,38 +154,35 @@ impl Scheduler {
 
         let mut commitments = std::mem::replace(&mut self.commitments, Vec::new());
 
-        let mut index = 1;
-        let mut start = start.max(self.start);
+        let mut index = 0;
+        let mut now = self.start;
 
-        while let Some(task) = commitments.get(index) {
-            if task.start >= start {
-                break;
-            }
-            index += 1;
-        }
+        tracing::trace!(?index, ?now, "initial values");
 
         'scheduler: loop {
-            if index == commitments.len() {
-                break;
+            // if the event at `index` is in the future, start where we are
+            // if it's in the past, increment `index` until that's true, setting `now` to the end of each event
+            //
+            // once we have the "future event", do the regular "next commitment" logic
+
+            while let Some(task) = commitments.get(index) {
+                if task.start >= now {
+                    break;
+                }
+                index += 1;
+                now = now.max(task.end);
+                tracing::trace!(?index, ?now, "moved forward");
             }
 
-            start = commitments
-                .get(index - 1)
-                .map(|t| t.end)
-                .unwrap_or(self.start)
-                .max(start);
+            let next_commitment = commitments.get(index).map(|t| t.start).unwrap_or(self.end);
 
-            tracing::trace!(?start, "starting to schedule");
+            tracing::trace!(?next_commitment, "found next commitment");
 
-            let next_commitment = self
-                .commitments
-                .get(index)
-                .map(|t| t.start)
-                .unwrap_or(self.end);
+            break;
 
             tracing::trace!(?next_commitment, "next commitment");
 
-            let mut time_available = (next_commitment - start).min(SESSION_TIME);
+            let mut time_available = (next_commitment - now).min(SESSION_TIME);
             let can_schedule_break = time_available == SESSION_TIME;
             if can_schedule_break {
                 time_available -= BREAK_TIME;
@@ -194,7 +191,7 @@ impl Scheduler {
             while time_available > Duration::zero() {
                 tracing::trace!(?time_available, "remaining time available");
 
-                match self.best_task_at(start, time_available) {
+                match self.best_task_at(now, time_available) {
                     None => break 'scheduler,
                     Some(task) => {
                         let time_for_task = task.remaining_time.min(time_available);
@@ -202,14 +199,14 @@ impl Scheduler {
                         commitments.insert(
                             index,
                             Event {
-                                start,
-                                end: start + time_for_task,
+                                start: now,
+                                end: now + time_for_task,
                                 what: EventData::Task(task.uuid.clone(), task.description.clone()),
                             },
                         );
 
                         index += 1;
-                        start += time_for_task;
+                        now += time_for_task;
                         time_available -= time_for_task;
                         task.checked_sub(time_for_task);
                     }
@@ -220,15 +217,15 @@ impl Scheduler {
                 commitments.insert(
                     index,
                     Event {
-                        start,
-                        end: start + BREAK_TIME,
+                        start: now,
+                        end: now + BREAK_TIME,
                         what: EventData::Break,
                     },
                 );
                 index += 1;
             }
 
-            tracing::debug!(?index, ?start, "done with commitments");
+            tracing::debug!(?index, ?now, "done with commitments");
 
             // TODO: increment index etc etc
             if index > 50 {
