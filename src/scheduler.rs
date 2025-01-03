@@ -280,22 +280,25 @@ impl Scheduler {
         while let Some(mut event) = current.take() {
             let next = iter.next();
 
-            if let Some(next_event) = &next {
-                if event.what == next_event.what
-                    && event.end >= next_event.start
-                    && event.start <= next_event.end
-                {
-                    event.start = event.start.min(next_event.start);
-                    event.end = event.end.max(next_event.end);
+            match &next {
+                Some(next_event) => {
+                    if event.what == next_event.what
+                        && event.end >= next_event.start
+                        && event.start <= next_event.end
+                    {
+                        event.start = event.start.min(next_event.start);
+                        event.end = event.end.max(next_event.end);
 
-                    current = Some(event);
-                    continue;
-                } else {
-                    self.commitments.push(event)
+                        current = Some(event);
+                        continue;
+                    } else {
+                        self.commitments.push(event)
+                    }
+
+                    current = next;
                 }
+                None => self.commitments.push(event),
             }
-
-            current = next;
         }
     }
 
