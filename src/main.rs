@@ -5,7 +5,7 @@ mod scheduler;
 mod task;
 mod taskwarrior;
 
-use chrono::{Duration, Local, Timelike, Weekday};
+use chrono::{DateTime, Duration, Local, Timelike, Weekday};
 use clap::Parser;
 use color_eyre::eyre::{Context, Result};
 use scheduler::Scheduler;
@@ -53,11 +53,16 @@ pub struct Cli {
 
     #[clap(long, default_value = "info")]
     log_level: LevelFilter,
+
+    #[clap(long)]
+    start: Option<DateTime<Local>>,
 }
 
 impl Cli {
     async fn run(&self) -> Result<()> {
-        let start = Local::now()
+        let start = self
+            .start
+            .unwrap_or_else(|| Local::now())
             .with_second(0)
             .unwrap()
             .with_nanosecond(0)
