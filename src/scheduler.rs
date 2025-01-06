@@ -326,7 +326,7 @@ impl Scheduler {
                     / time_available.num_minutes() as f64)
                     .abs()
                     .powf(2.0)
-                    .min(3.0);
+                    .min(5.0);
 
                 (task, urgency)
             })
