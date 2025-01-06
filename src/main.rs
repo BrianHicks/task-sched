@@ -67,7 +67,8 @@ impl Cli {
             .unwrap()
             .with_nanosecond(0)
             .unwrap();
-        let end = start + Duration::days(self.days_out.into());
+        let end = start.with_hour(0).unwrap().with_minute(0).unwrap()
+            + Duration::days(self.days_out.into());
 
         // TODO: figure out how to parse these
         let work_days = vec![
