@@ -43,22 +43,24 @@ impl Task {
     }
 
     fn base_due_urgency_at(&self, when: DateTime<Utc>) -> f64 {
-        match self.due {
-            Some(due) => {
-                // We're OK with the conversion being naive here. We're pretty
-                // unlikely to enounter high enough numbers that we couldn't
-                // convert with `as`.
-                let days_overdue = (when - due).num_seconds() as f64 / 86_400.0;
+        // In order to balance out far-away due tasks with near ones for the
+        // purposes of scheduling, we give tasks a fake "target date" that's a
+        // while out
+        let target = self
+            .due
+            .unwrap_or_else(|| (self.entry + Duration::weeks(4)).max(when + Duration::weeks(2)));
 
-                if days_overdue >= 7.0 {
-                    1.0
-                } else if days_overdue >= -14.0 {
-                    ((days_overdue + 14.0) * 0.8 / 21.0) + 0.2
-                } else {
-                    0.2
-                }
-            }
-            None => 0.0,
+        // We're OK with the conversion being naive here. We're pretty
+        // unlikely to enounter high enough numbers that we couldn't
+        // convert with `as`.
+        let days_overdue = (when - target).num_seconds() as f64 / 86_400.0;
+
+        if days_overdue >= 7.0 {
+            1.0
+        } else if days_overdue >= -14.0 {
+            ((days_overdue + 14.0) * 0.8 / 21.0) + 0.2
+        } else {
+            0.2
         }
     }
 
