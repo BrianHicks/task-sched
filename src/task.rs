@@ -48,7 +48,7 @@ impl Task {
         // while out
         let target = self
             .due
-            .unwrap_or_else(|| (self.entry + Duration::weeks(4)).max(when + Duration::weeks(2)));
+            .unwrap_or_else(|| (self.entry + Duration::weeks(4)).max(when + Duration::weeks(1)));
 
         // We're OK with the conversion being naive here. We're pretty
         // unlikely to enounter high enough numbers that we couldn't
