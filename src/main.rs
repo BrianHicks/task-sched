@@ -62,7 +62,7 @@ impl Cli {
     async fn run(&self) -> Result<()> {
         let start = self
             .start
-            .unwrap_or_else(|| Local::now())
+            .unwrap_or_else(Local::now)
             .with_second(0)
             .unwrap()
             .with_nanosecond(0)

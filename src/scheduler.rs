@@ -397,7 +397,7 @@ impl Display for Event {
                 f.write_str(" (")?;
 
                 let duration = human_time(self.duration());
-                let mut pad = 3_usize.checked_sub(duration.len()).unwrap_or(0);
+                let mut pad = 3_usize.saturating_sub(duration.len());
 
                 f.write_str(&duration)?;
                 f.write_char(')')?;
