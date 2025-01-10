@@ -261,6 +261,7 @@ impl Scheduler {
                     },
                 );
                 index += 1;
+                now += BREAK_TIME;
             }
 
             tracing::trace!(?index, ?now, "done scheduling slot");
