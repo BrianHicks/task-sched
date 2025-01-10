@@ -220,6 +220,7 @@ impl Scheduler {
                     index += 1;
                     now += time_available;
                     time_available = Duration::zero();
+                    continue;
                 }
 
                 match self.best_task_at(now, time_available, &outstanding_tasks) {
