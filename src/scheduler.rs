@@ -378,7 +378,7 @@ impl Display for Event {
         match &self.what {
             EventData::Break => {
                 f.write_str("---------- ")?;
-                self.start.format("%_I:%M %P").fmt(f)?;
+                self.start.format("%-I:%M %P").fmt(f)?;
                 f.write_str(" (")?;
                 f.write_str(&human_time(self.duration()))?;
                 f.write_str(" break) ----------\n")
@@ -386,7 +386,7 @@ impl Display for Event {
 
             EventData::Blocked => {
                 f.write_str("\n========== ")?;
-                self.start.format("%I:%M %P").fmt(f)?;
+                self.start.format("%-I:%M %P").fmt(f)?;
                 f.write_str(" (")?;
                 f.write_str(&human_time(self.duration()))?;
                 f.write_str(" block) ==========\n")
