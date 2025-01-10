@@ -1,6 +1,6 @@
 [package]
 name = "task-sched"
-version = "1.0.3"
+version = "1.0.4"
 edition = "2021"
 description = "Create a schedule from Taskwarrior tasks"
 
