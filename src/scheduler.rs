@@ -22,8 +22,6 @@ pub struct Scheduler {
     pub commitments: Vec<Event>,
 }
 
-const SESSION_TIME: Duration = Duration::minutes(30);
-
 const BREAK_TIME: Duration = Duration::minutes(5);
 
 impl Scheduler {
@@ -196,16 +194,11 @@ impl Scheduler {
 
             tracing::trace!(?next_commitment, "next commitment");
 
-            let mut time_available = (next_commitment - now).min(SESSION_TIME);
-            let can_schedule_break = time_available == SESSION_TIME;
-            if can_schedule_break {
-                time_available -= BREAK_TIME;
-            }
-
+            let mut time_available = next_commitment - now;
             tracing::trace!(start=?now, ?time_available, "scheduling for slot");
 
             while time_available > Duration::zero() {
-                if time_available <= BREAK_TIME && !can_schedule_break {
+                if time_available <= BREAK_TIME {
                     tracing::debug!(start=?now, ?time_available, "scheduling short break");
 
                     commitments.insert(
@@ -250,19 +243,6 @@ impl Scheduler {
                 }
 
                 tracing::trace!(?time_available, "remaining time available");
-            }
-
-            if can_schedule_break {
-                commitments.insert(
-                    index,
-                    Event {
-                        start: now,
-                        end: now + BREAK_TIME,
-                        what: EventData::Break,
-                    },
-                );
-                index += 1;
-                now += BREAK_TIME;
             }
 
             tracing::trace!(?index, ?now, "done scheduling slot");
