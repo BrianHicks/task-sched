@@ -5,7 +5,7 @@ mod scheduler;
 mod task;
 mod taskwarrior;
 
-use chrono::{DateTime, Duration, Local, Timelike, Weekday};
+use chrono::{DateTime, Datelike, Duration, Local, Timelike, Weekday};
 use clap::Parser;
 use color_eyre::eyre::{Context, Result};
 use scheduler::Scheduler;
@@ -108,7 +108,16 @@ impl Cli {
 
         scheduler.schedule();
 
+        let mut day = 0;
+
         for commitment in scheduler.commitments {
+            if commitment.start.day() != day {
+                day = commitment.start.day();
+                println!(
+                    "\n########## {} ##########\n",
+                    commitment.start.format("%b %d")
+                )
+            }
             if commitment.duration() <= Duration::minutes(120) {
                 println!("{}", commitment)
             }
