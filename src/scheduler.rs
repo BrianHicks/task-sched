@@ -216,7 +216,7 @@ impl Scheduler {
                     continue;
                 }
 
-                match self.best_task_at(now, time_available, &outstanding_tasks) {
+                match self.best_task_at(now, &outstanding_tasks) {
                     None => {
                         tracing::trace!("no tasks left; finishing");
                         break 'scheduler;
@@ -288,7 +288,6 @@ impl Scheduler {
     fn best_task_at(
         &mut self,
         when: DateTime<Local>,
-        time_available: Duration,
         outstanding_tasks: &HashSet<String>,
     ) -> Option<&mut TimedTask> {
         self.tasks
@@ -302,13 +301,7 @@ impl Scheduler {
                     .is_none()
             })
             .map(|task| {
-                let mut urgency = task.urgency_at(when.to_utc(), &self.tw_config);
-                urgency -= ((task.remaining_time.num_minutes() as f64
-                    - time_available.num_minutes() as f64)
-                    / time_available.num_minutes() as f64)
-                    .abs()
-                    .powf(2.0)
-                    .min(5.0);
+                let urgency = task.urgency_at(when.to_utc(), &self.tw_config);
 
                 (task, urgency)
             })
