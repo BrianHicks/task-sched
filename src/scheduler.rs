@@ -347,7 +347,7 @@ impl TimedTask {
     }
 
     fn is_meta(&self) -> bool {
-        !self.depends.is_empty()
+        self.tags.contains("meta")
     }
 
     fn checked_sub(&mut self, how_much: Duration) {

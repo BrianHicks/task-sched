@@ -26,6 +26,9 @@ pub struct Task {
 
     #[serde(default)]
     pub depends: HashSet<String>,
+
+    #[serde(default)]
+    pub tags: HashSet<String>,
 }
 
 impl Task {
