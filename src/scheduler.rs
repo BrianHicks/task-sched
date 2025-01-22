@@ -388,10 +388,6 @@ impl Display for Event {
             }
 
             EventData::Task { name, is_meta, .. } => {
-                if *is_meta {
-                    f.write_str("META ")?;
-                }
-
                 self.start.format("%b %-d, %_I:%M %P").fmt(f)?;
                 f.write_str(" (")?;
 
@@ -406,6 +402,11 @@ impl Display for Event {
                 }
 
                 f.write_str(" - ")?;
+
+                if *is_meta {
+                    f.write_str("META - ")?;
+                }
+
                 f.write_str(name)
             }
         }
