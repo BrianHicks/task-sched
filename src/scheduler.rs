@@ -227,7 +227,10 @@ impl Scheduler {
                         let event = Event {
                             start: now,
                             end: now + time_for_task,
-                            what: EventData::Task(task.uuid.clone(), task.description.clone()),
+                            what: EventData::Task {
+                                uuid: task.uuid.clone(),
+                                name: task.description.clone(),
+                            },
                         };
                         tracing::debug!(?event.start, ?time_for_task, ?event.what, "scheduled task");
                         commitments.insert(index, event);
@@ -366,7 +369,7 @@ impl Display for Event {
                 f.write_str(" block) ==========\n")
             }
 
-            EventData::Task(_, name) => {
+            EventData::Task { name, .. } => {
                 self.start.format("%b %-d, %_I:%M %P").fmt(f)?;
                 f.write_str(" (")?;
 
@@ -391,7 +394,7 @@ impl Display for Event {
 pub enum EventData {
     Blocked,
     Break,
-    Task(String, String),
+    Task { uuid: String, name: String },
 }
 
 fn human_time(duration: Duration) -> String {
