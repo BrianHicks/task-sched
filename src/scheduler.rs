@@ -222,7 +222,14 @@ impl Scheduler {
                         break 'scheduler;
                     }
                     Some(task) => {
-                        let time_for_task = task.remaining_time.min(time_available);
+                        // If we have dependencies, this is a meta-task and
+                        // should just be broken down or complete on the spot
+                        // instead of having time schedule for it.
+                        let time_for_task = if task.is_meta() {
+                            time_available.min(Duration::minutes(10))
+                        } else {
+                            task.remaining_time.min(time_available)
+                        };
 
                         let event = Event {
                             start: now,
@@ -230,6 +237,7 @@ impl Scheduler {
                             what: EventData::Task {
                                 uuid: task.uuid.clone(),
                                 name: task.description.clone(),
+                                is_meta: task.is_meta(),
                             },
                         };
                         tracing::debug!(?event.start, ?time_for_task, ?event.what, "scheduled task");
@@ -238,7 +246,13 @@ impl Scheduler {
                         index += 1;
                         now += time_for_task;
                         time_available -= time_for_task;
-                        task.checked_sub(time_for_task);
+
+                        task.checked_sub(if task.is_meta() {
+                            task.remaining_time
+                        } else {
+                            time_for_task
+                        });
+
                         if !task.available() {
                             outstanding_tasks.remove(&task.uuid);
                         }
@@ -332,6 +346,10 @@ impl TimedTask {
         self.remaining_time > Duration::zero()
     }
 
+    fn is_meta(&self) -> bool {
+        !self.depends.is_empty()
+    }
+
     fn checked_sub(&mut self, how_much: Duration) {
         self.remaining_time = Duration::zero().max(self.remaining_time - how_much);
     }
@@ -369,7 +387,11 @@ impl Display for Event {
                 f.write_str(" block) ==========\n")
             }
 
-            EventData::Task { name, .. } => {
+            EventData::Task { name, is_meta, .. } => {
+                if *is_meta {
+                    f.write_str("META ")?;
+                }
+
                 self.start.format("%b %-d, %_I:%M %P").fmt(f)?;
                 f.write_str(" (")?;
 
@@ -394,7 +416,11 @@ impl Display for Event {
 pub enum EventData {
     Blocked,
     Break,
-    Task { uuid: String, name: String },
+    Task {
+        uuid: String,
+        name: String,
+        is_meta: bool,
+    },
 }
 
 fn human_time(duration: Duration) -> String {
