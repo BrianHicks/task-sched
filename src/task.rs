@@ -21,6 +21,9 @@ pub struct Task {
     #[serde(default, deserialize_with = "crate::dates::tw_datetime_opt")]
     pub due: Option<DateTime<Utc>>,
 
+    #[serde(default, deserialize_with = "crate::dates::tw_datetime_opt")]
+    pub target: Option<DateTime<Utc>>,
+
     #[serde(default, deserialize_with = "crate::dates::duration")]
     pub estimate: Option<Duration>,
 
@@ -46,12 +49,27 @@ impl Task {
     }
 
     fn base_due_urgency_at(&self, when: DateTime<Utc>) -> f64 {
-        // In order to balance out far-away due tasks with near ones for the
-        // purposes of scheduling, we give tasks a fake "target date" that's a
-        // while out
-        let target = self
-            .due
-            .unwrap_or_else(|| (self.entry + Duration::weeks(4)).max(when + Duration::weeks(1)));
+        // We build on the base Taskwarrior due date calculation by adding a
+        // couple of dates (listed above the cases.)
+        let target = match (self.due, self.target) {
+            // If we only have a due date, use it.
+            (Some(due), None) => due,
+
+            // If we only have a target date, use it.
+            (None, Some(target)) => target,
+
+            // If we have both a due and target date, use whichever is soonest.
+            // If we have schedule pressure, our urgency needs to reflect the
+            // maximum pressure.
+            (Some(due), Some(target)) => due.min(target),
+
+            // Tasks that have either due or target dates will dominate the
+            // urgency calculation. To balance that out, we give tasks with
+            // neither a due date nor a target a fake target that's perpetually
+            // some time into the future, with urgency increasing the longer ago
+            // it was added.
+            (None, None) => (self.entry + Duration::weeks(4)).max(when + Duration::weeks(1)),
+        };
 
         // We're OK with the conversion being naive here. We're pretty
         // unlikely to enounter high enough numbers that we couldn't
