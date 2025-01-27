@@ -424,6 +424,15 @@ pub enum EventData {
     },
 }
 
+impl EventData {
+    pub fn has_info_for_humans(&self) -> bool {
+        match self {
+            Self::Blocked | Self::Break => false,
+            Self::Task { .. } => true,
+        }
+    }
+}
+
 fn human_time(duration: Duration) -> String {
     let mut minutes = duration.num_minutes() as f64;
 

@@ -119,7 +119,9 @@ impl Cli {
                     commitment.start.format("%b %d")
                 )
             }
-            if commitment.duration() <= Duration::minutes(120) {
+            if commitment.what.has_info_for_humans()
+                || commitment.duration() <= Duration::minutes(120)
+            {
                 println!("{}", commitment)
             }
         }
